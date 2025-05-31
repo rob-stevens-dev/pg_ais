@@ -15,6 +15,7 @@ static void test_msg_1_parsing(void **state) {
     assert_true(ok);
     assert_int_equal(msg.type, 1);
     assert_int_equal(msg.mmsi, 123456789); // Replace with real MMSI
+    free_ais_message(&msg);
 }
 
 static void test_msg_2_parsing(void **state) {
@@ -24,6 +25,7 @@ static void test_msg_2_parsing(void **state) {
     assert_true(ok);
     assert_int_equal(msg.type, 2);
     assert_int_equal(msg.mmsi, 123456789); // Replace with real MMSI
+    free_ais_message(&msg);
 }
 
 static void test_msg_3_parsing(void **state) {
@@ -33,6 +35,7 @@ static void test_msg_3_parsing(void **state) {
     assert_true(ok);
     assert_int_equal(msg.type, 3);
     assert_int_equal(msg.mmsi, 123456789); // Replace with real MMSI
+    free_ais_message(&msg);
 }
 
 static void test_msg_4_parsing(void **state) {
@@ -42,6 +45,7 @@ static void test_msg_4_parsing(void **state) {
     assert_true(ok);
     assert_int_equal(msg.type, 4);
     assert_int_equal(msg.mmsi, 123456789); // Replace with real MMSI
+    free_ais_message(&msg);
 }
 
 static void test_msg_5_parsing(void **state) {
@@ -51,6 +55,7 @@ static void test_msg_5_parsing(void **state) {
     assert_true(ok);
     assert_int_equal(msg.type, 5);
     assert_int_equal(msg.mmsi, 123456789); // Replace with real MMSI
+    free_ais_message(&msg);
 }
 
 static void test_valid_fragment_parsing(void **state) {
@@ -65,7 +70,7 @@ static void test_valid_fragment_parsing(void **state) {
     assert_string_equal(frag.message_id, "1");
     assert_string_equal(frag.payload, "55NBsv02>tNDBL@E");
     assert_int_equal(frag.fill_bits, 0);
-    free(frag.payload);
+    free_ais_message(&msg);
 }
 
 static void test_invalid_fragment_parsing(void **state) {
@@ -74,6 +79,7 @@ static void test_invalid_fragment_parsing(void **state) {
 
     (void)state;
 
+    free_ais_message(&msg);
     assert_false(parse_ais_fragment(input, &frag));
 }
 
@@ -98,6 +104,7 @@ static void test_successful_reassembly(void **state) {
     assert_true(try_reassemble(&buffer, &msg));
 
     reset_buffer(&buffer);
+    free_ais_message(&msg);
 }
 
 static void test_incomplete_reassembly(void **state) {
@@ -116,6 +123,7 @@ static void test_incomplete_reassembly(void **state) {
     assert_false(try_reassemble(&buffer, &msg));
 
     reset_buffer(&buffer);
+    free_ais_message(&msg);
 }
 
 int main(void) {
