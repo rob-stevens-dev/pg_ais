@@ -123,6 +123,14 @@ bool parse_msg_10(AISMessage *msg, const char *payload) {
     return true;
 }
 
+bool parse_msg_11(AISMessage *msg, const char *payload) {
+    msg->type = 11;
+    msg->mmsi = parse_uint(payload, 8, 30);
+    msg->lat = parse_lat(payload, 61);
+    msg->lon = parse_lon(payload, 89);
+    return true;
+}
+
 bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
     if (!payload || strlen(payload) < 1) return false;
     int msg_type = parse_uint(payload, 0, 6);
@@ -138,6 +146,7 @@ bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
         case 9: return parse_msg_9(msg, payload);
         
         case 10: return parse_msg_10(msg, payload);
+        case 11: return parse_msg_11(msg, payload);
         
         default: return false;
     }
