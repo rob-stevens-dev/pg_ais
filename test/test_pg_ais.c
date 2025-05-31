@@ -281,7 +281,7 @@ int main(void) {
         cmocka_unit_test(test_msg_14_parsing),
         cmocka_unit_test(test_msg_15_parsing),
         cmocka_unit_test(test_msg_16_parsing),
-        cmocka_unit_test(test_msg_117_parsing),
+        cmocka_unit_test(test_msg_17_parsing),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }
