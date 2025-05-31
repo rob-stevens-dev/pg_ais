@@ -90,4 +90,8 @@ void free_ais_message(AISMessage *msg) {
         free(msg->vessel_name);
         msg->vessel_name = NULL;
     }
+    if (msg->bin_data) {
+        free(msg->bin_data);
+        msg->bin_data = NULL;
+    }
 }
