@@ -1,13 +1,3 @@
-// File: src/parse_ais_msg.h
-#ifndef PARSE_AIS_MSG_H
-#define PARSE_AIS_MSG_H
-
-#include "pg_ais.h"
-
-bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits);
-
-#endif
-
 // ------------------------------------------
 // File: src/parse_ais_msg.c
 #include "parse_ais_msg.h"
@@ -80,6 +70,25 @@ bool parse_msg_6(AISMessage *msg, const char *payload) {
     return true;
 }
 
+bool parse_msg_7(AISMessage *msg, const char *payload) {
+    msg->type = 7;
+    msg->mmsi = parse_uint(payload, 8, 30);
+    msg->seq_num = parse_uint(payload, 38, 2);
+    msg->dest_mmsi = parse_uint(payload, 40, 30);
+    msg->retransmit = parse_uint(payload, 70, 1);
+    msg->app_id = parse_uint(payload, 72, 16);
+    int bin_start = 88;
+    int bin_len = (int)(strlen(payload) * 6) - bin_start;
+    int bin_bytes = bin_len / 8;
+    msg->bin_len = bin_bytes;
+    msg->bin_data = malloc(bin_bytes);
+    if (msg->bin_data == NULL) return false;
+    for (int i = 0; i < bin_bytes; i++) {
+        msg->bin_data[i] = (char)parse_uint(payload, bin_start + i * 8, 8);
+    }
+    return true;
+}
+
 bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
     if (!payload || strlen(payload) < 1) return false;
     int msg_type = parse_uint(payload, 0, 6);
@@ -90,6 +99,7 @@ bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
         case 4: return parse_msg_4(msg, payload);
         case 5: return parse_msg_5(msg, payload);
         case 6: return parse_msg_6(msg, payload);
+        case 7: return parse_msg_6(msg, payload);
         default: return false;
     }
 }
