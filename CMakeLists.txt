@@ -1,15 +1,66 @@
 cmake_minimum_required(VERSION 3.10)
 project(pg_ais C)
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 99)
 
-find_package(PostgreSQL REQUIRED)
-include_directories(${PostgreSQL_INCLUDE_DIRS})
+# Locate pg_config
+find_program(PG_CONFIG pg_config REQUIRED)
 
-add_library(pg_ais SHARED src/pg_ais.c)
-target_link_libraries(pg_ais ${PostgreSQL_LIBRARIES})
+# Get PostgreSQL include and lib paths
+execute_process(
+    COMMAND ${PG_CONFIG} --includedir-server
+    OUTPUT_VARIABLE PG_INCLUDE_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
-set_target_properties(pg_ais PROPERTIES PREFIX "")
-install(TARGETS pg_ais DESTINATION lib)
-install(FILES sql/pg_ais--0.1.sql DESTINATION share/postgresql/extension)
-install(FILES pg_ais.control DESTINATION share/postgresql/extension)
+execute_process(
+    COMMAND ${PG_CONFIG} --libdir
+    OUTPUT_VARIABLE PG_LIB_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+execute_process(
+    COMMAND ${PG_CONFIG} --pkglibdir
+    OUTPUT_VARIABLE PG_PKGLIB_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+include_directories(${PG_INCLUDE_DIR})
+link_directories(${PG_LIB_DIR})
+
+# Extension library
+add_library(pg_ais SHARED
+    src/pg_ais.c
+)
+
+target_include_directories(pg_ais PRIVATE ${PG_INCLUDE_DIR})
+target_link_libraries(pg_ais PRIVATE pq)
+
+# Output to PostgreSQL libdir
+set_target_properties(pg_ais PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${PG_PKGLIB_DIR}
+    PREFIX ""
+)
+
+# Install the shared library
+install(TARGETS pg_ais DESTINATION ${PG_PKGLIB_DIR})
+
+# -------------------------------
+# CMocka Unit Test Configuration
+# -------------------------------
+enable_testing()
+
+add_executable(pg_ais_tests
+    test/test_pg_ais.c
+    src/pg_ais_core.c
+)
+
+target_include_directories(pg_ais_tests PRIVATE
+    ${PG_INCLUDE_DIR}
+    src
+)
+
+target_link_libraries(pg_ais_tests PRIVATE
+    cmocka
+)
+add_test(NAME pg_ais_tests COMMAND pg_ais_tests)
