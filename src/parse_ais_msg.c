@@ -126,9 +126,9 @@ bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
         case 4: return parse_msg_4(msg, payload);
         case 5: return parse_msg_5(msg, payload);
         case 6: return parse_msg_6(msg, payload);
-        case 7: return parse_msg_6(msg, payload);
-        case 8: return parse_msg_6(msg, payload);
-        case 9: return parse_msg_6(msg, payload);
+        case 7: return parse_msg_7(msg, payload);
+        case 8: return parse_msg_8(msg, payload);
+        case 9: return parse_msg_9(msg, payload);
         default: return false;
     }
 }
