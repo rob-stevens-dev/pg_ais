@@ -1,4 +1,5 @@
-comment = 'PostgreSQL extension for AIS NMEA 0183 parsing'
-default_version = '0.2'
+# pg_ais.control
+comment = 'AIS type and utilities for Automatic Identification System NMEA messages'
+default_version = '0.1'
 relocatable = true
-module_pathname = '$libdir/pg_ais'
+module_pathname = 'pg_ais'

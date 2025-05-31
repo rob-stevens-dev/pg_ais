@@ -25,15 +25,21 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-include_directories(${PG_INCLUDE_DIR})
+include_directories(${PG_INCLUDE_DIR} src)
 link_directories(${PG_LIB_DIR})
 
 # Extension library
 add_library(pg_ais SHARED
     src/pg_ais.c
+    src/parse_ais.c
+    src/ais_core.c
 )
 
-target_include_directories(pg_ais PRIVATE ${PG_INCLUDE_DIR})
+target_include_directories(pg_ais PRIVATE
+    ${PG_INCLUDE_DIR}
+    src
+)
+
 target_link_libraries(pg_ais PRIVATE pq)
 
 # Output to PostgreSQL libdir
@@ -53,6 +59,7 @@ enable_testing()
 add_executable(pg_ais_tests
     test/test_pg_ais.c
     src/pg_ais_core.c
+    src/ais_core.c
 )
 
 target_include_directories(pg_ais_tests PRIVATE
@@ -63,4 +70,5 @@ target_include_directories(pg_ais_tests PRIVATE
 target_link_libraries(pg_ais_tests PRIVATE
     cmocka
 )
+
 add_test(NAME pg_ais_tests COMMAND pg_ais_tests)

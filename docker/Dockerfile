@@ -23,11 +23,5 @@ RUN cmake -S . -B build && \
     cmake --build build && \
     make -C build install
 
-# Run C unit tests
-RUN make test_phase1 || true
-
-# Run SQL regression test
-RUN make sql_regression || true
-
 # Entrypoint remains the PostgreSQL server
 CMD ["postgres"]
