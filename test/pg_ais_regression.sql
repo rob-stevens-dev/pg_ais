@@ -13,3 +13,5 @@ SELECT id, sentence::text FROM test_ais ORDER BY id;
 
 -- Test comparison
 SELECT sentence = sentence AS comparison FROM test_ais;
+
+SELECT pg_ais_debug(sentence) FROM test_ais;

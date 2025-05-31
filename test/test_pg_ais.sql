@@ -18,3 +18,6 @@ SELECT id, sentence::text FROM test_ais;
 
 -- Comparison test
 SELECT sentence = sentence FROM test_ais;
+
+-- Debug output test
+SELECT pg_ais_debug(sentence) FROM test_ais;
