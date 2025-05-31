@@ -59,6 +59,8 @@ pg_ais_parse(PG_FUNCTION_ARGS) {
                      msg.mmsi, msg.lat, msg.lon, msg.speed, msg.heading);
 
     AIS_FREE(cstr);
+    free_ais_message(&msg);
+
     Datum result = DirectFunctionCall1(jsonb_in, CStringGetDatum(json.data));
     PG_RETURN_DATUM(result);
 }
@@ -75,4 +77,17 @@ Datum
 ais_out(PG_FUNCTION_ARGS) {
     ais *val = (ais *) PG_GETARG_POINTER(0);
     PG_RETURN_CSTRING(ais_to_cstring(val));
+}
+
+
+/* Internal utility functions. */
+void free_ais_message(AISMessage *msg) {
+    if (msg->callsign) {
+        free(msg->callsign);
+        msg->callsign = NULL;
+    }
+    if (msg->vessel_name) {
+        free(msg->vessel_name);
+        msg->vessel_name = NULL;
+    }
 }

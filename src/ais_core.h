@@ -20,5 +20,6 @@ typedef struct {
 } AISMessage;
 
 bool parse_ais_sentence(const char *sentence, AISMessage *msg);
+void free_ais_message(AISMessage *msg);
 
 #endif /* AIS_CORE_H */
