@@ -1,5 +1,5 @@
 # pg_ais.control
 comment = 'AIS type and utilities for Automatic Identification System NMEA messages'
 default_version = '0.1'
-relocatable = true
+relocatable = false
 module_pathname = 'pg_ais'
