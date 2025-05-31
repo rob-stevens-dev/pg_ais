@@ -1,0 +1,40 @@
+-- Load the extension
+CREATE EXTENSION IF NOT EXISTS pg_ais;
+ERROR:  could not load library "/usr/lib/postgresql/15/lib/pg_ais.so": /usr/lib/postgresql/15/lib/pg_ais.so: undefined symbol: ais_to_cstring
+-- Regression test: clean table
+DROP TABLE IF EXISTS test_ais;
+NOTICE:  table "test_ais" does not exist, skipping
+CREATE TABLE test_ais (id serial, sentence ais);
+ERROR:  type "ais" does not exist
+LINE 1: CREATE TABLE test_ais (id serial, sentence ais);
+                                                   ^
+-- ✅ 1. Valid multi-part message (reassembled)
+SELECT pg_ais_parse('!AIVDM,2,1,2,B,53aGowP000001@D;E@E=:qD00000,0*5C');
+ERROR:  function pg_ais_parse(unknown) does not exist
+LINE 1: SELECT pg_ais_parse('!AIVDM,2,1,2,B,53aGowP000001@D;E@E=:qD0...
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+SELECT pg_ais_parse('!AIVDM,2,2,2,B,00000000000,2*21');
+ERROR:  function pg_ais_parse(unknown) does not exist
+LINE 1: SELECT pg_ais_parse('!AIVDM,2,2,2,B,00000000000,2*21');
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+-- ✅ 2. Out-of-order message (discarded)
+SELECT pg_ais_parse('!AIVDM,2,2,9,B,00000000000,2*27');  -- arrives second part first
+ERROR:  function pg_ais_parse(unknown) does not exist
+LINE 1: SELECT pg_ais_parse('!AIVDM,2,2,9,B,00000000000,2*27');
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+SELECT pg_ais_parse('!AIVDM,2,1,9,B,53aGowP000001@D;E@E=:qD00000,0*5C');
+ERROR:  function pg_ais_parse(unknown) does not exist
+LINE 1: SELECT pg_ais_parse('!AIVDM,2,1,9,B,53aGowP000001@D;E@E=:qD0...
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+-- ✅ 3. Incomplete message (only one part)
+SELECT pg_ais_parse('!AIVDM,2,1,3,B,53aGowP000001@D;E@E=:qD00000,0*5C');
+ERROR:  function pg_ais_parse(unknown) does not exist
+LINE 1: SELECT pg_ais_parse('!AIVDM,2,1,3,B,53aGowP000001@D;E@E=:qD0...
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+-- Optionally reset fragment buffer
+-- SELECT pg_ais_reset();
