@@ -241,6 +241,13 @@ bool parse_msg_22(AISMessage *msg, const char *payload) {
     return true;
 }
 
+bool parse_msg_23(AISMessage *msg, const char *payload) {
+    msg->type = 23;
+    msg->mmsi = parse_uint(payload, 8, 30);
+    msg->app_id = parse_uint(payload, 40, 12);  // placeholder for NE/SE slot time info
+    return true;
+}
+
 bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
     if (!payload || strlen(payload) < 1) return false;
     int msg_type = parse_uint(payload, 0, 6);
@@ -269,6 +276,7 @@ bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
         case 20: return parse_msg_20(msg, payload);
         case 21: return parse_msg_21(msg, payload);
         case 22: return parse_msg_22(msg, payload);
+        case 23: return parse_msg_23(msg, payload);
 
         default: return false;
     }
