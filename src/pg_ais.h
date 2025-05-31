@@ -1,16 +1,60 @@
+// pg_ais.h
+
 #ifndef PG_AIS_H
 #define PG_AIS_H
 
 #include "postgres.h"
+#include "fmgr.h"
+#include "utils/varlena.h"
 
-typedef struct varlena ais;
+#define MAX_PARTS 5
 
-// PostgreSQL internal
-ais *ais_from_cstring(const char *str);
-char *ais_to_cstring(const ais *value);
-
-// CMocka testable
-ais *ais_from_cstring_external(const char *str);
-char *ais_to_cstring_external(const ais *value);
-
+#ifndef AIS_ALLOC
+    #ifdef PG_EXTENSION
+        #define AIS_ALLOC palloc
+        #define AIS_FREE pfree
+        #define AIS_STRDUP pstrdup
+    #else
+        #include <stdlib.h>
+        #include <string.h>
+        #define AIS_ALLOC malloc
+        #define AIS_FREE free
+        #define AIS_STRDUP strdup
+    #endif
 #endif
+
+// PostgreSQL varlena wrapper
+typedef struct ais {
+    struct varlena vl;  // must be struct-qualified here
+} ais;
+
+// AIS Message structures
+typedef struct {
+    char *payload;
+    int total;
+    int seq;
+    char message_id[9];
+    char channel;
+    int fill_bits;
+    char *raw;
+} AISFragment;
+
+typedef struct {
+    AISFragment *parts[MAX_PARTS];
+    int received;
+} AISFragmentBuffer;
+
+typedef struct {
+    int type;
+    int mmsi;
+    float lat;
+    float lon;
+    float speed;
+    float heading;
+} AISMessage;
+
+// C-string converters
+char *ais_to_cstring(const ais *value);
+ais *ais_from_cstring_external(const char *str);
+
+#endif /* PG_AIS_H */

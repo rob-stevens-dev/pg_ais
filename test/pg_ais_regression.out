@@ -1,16 +1,29 @@
- id |                    sentence
-----+------------------------------------------------
-  1 | !AIVDM,1,1,,A,15Muq60001G?tTpE>Gbk0?wN0<0,0*7D
+-- Load the extension
+CREATE EXTENSION IF NOT EXISTS pg_ais;
+
+-- Regression test: clean table
+DROP TABLE IF EXISTS test_ais;
+CREATE TABLE test_ais (id serial, sentence ais);
+
+-- ✅ 1. Valid multi-part message (reassembled)
+ pg_ais_parse
+---------------------------------------------------------------
+ {"mmsi":123456789,"lat":42.123456,"lon":-70.654321,"speed":14.2,"heading":82.5}
 (1 row)
 
- comparison
-------------
- t
+-- ✅ 2. Out-of-order message (discarded)
+ pg_ais_parse
+--------------
+ 
 (1 row)
 
-                            pg_ais_debug                            
-------------------------------------------------------------------
- {"talker": "!AIVDM", "total": 1, "number": 1, "seq_id": "", 
-  "channel": "A", "payload": "15Muq60001G?tTpE>Gbk0?wN0<0", 
-  "fill": 0, "valid_checksum": true}
+ pg_ais_parse
+--------------
+ 
+(1 row)
+
+-- ✅ 3. Incomplete message (ignored)
+ pg_ais_parse
+--------------
+ 
 (1 row)

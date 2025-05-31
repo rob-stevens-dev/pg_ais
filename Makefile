@@ -1,58 +1,40 @@
-# Makefile for pg_ais extension
+EXTENSION = pg_ais
+DATA = sql/pg_ais--0.1.sql
+MODULE_big = pg_ais
+OBJS = $(patsubst %.c,%.o,$(wildcard src/*.c))
 
-EXT_NAME = pg_ais
-EXT_VERSION = 0.3
-DOCKER_COMPOSE = docker-compose
-PG_DOCKER_SERVICE = pg_ais_dev
-PG_USER = postgres
-PG_DB = pg_ais
+PG_CONFIG := pg_config
+PG_VERSION := $(shell $(PG_CONFIG) --version | awk '{print $$2}' | cut -d. -f1)
+PG_REGRESS := /usr/lib/postgresql/$(PG_VERSION)/lib/pgxs/src/test/regress/pg_regress
 
-BUILD_DIR = build
-SRC_DIR = src
-TEST_DIR = test
-SQL_DIR = sql
+PG_CPPFLAGS = -I$(srcdir)/src
+PGXS := $(shell $(PG_CONFIG) --pgxs)
+include $(PGXS)
 
-.PHONY: all build install clean test test_phase1 test_phase2 test_all regression sql_regression docker-up docker-down docker-rebuild psql reset-db
+.PHONY: docker-up docker-down docker-ps docker-rebuild docker-test docker-regression
 
-all: build
-
-build:
-	mkdir -p $(BUILD_DIR)
-	cd $(BUILD_DIR) && cmake .. && make
-
-install:
-	cd $(BUILD_DIR) && make install
-
-clean:
-	rm -rf $(BUILD_DIR)
-
-test: test_all
-
-test_phase1:
-	cd $(BUILD_DIR) && ctest --output-on-failure
-
-sql_regression:
-	cd $(BUILD_DIR) && pg_regress \
-		--load-extension=$(EXT_NAME) \
-		--inputdir=sql --outputdir=sql --dbname=$(PG_DB) sql/$(EXT_NAME)_regression.sql
-
-test_all: test_phase1 sql_regression
+prepare-regression:
+	mkdir -p sql/sql sql/expected
+	cp test/pg_ais_regression.sql sql/sql/
+	cp test/pg_ais_regression.out sql/expected/
 
 docker-up:
-	$(DOCKER_COMPOSE) up -d --build
+	docker-compose up -d
 
 docker-down:
-	$(DOCKER_COMPOSE) down --remove-orphans
+	docker-compose down --remove-orphans
 
-docker-rebuild: docker-down
-	$(DOCKER_COMPOSE) build --no-cache
-	$(DOCKER_COMPOSE) up -d
+docker-ps:
+	docker-compose ps
 
-psql:
-	$(DOCKER_COMPOSE) exec -T $(PG_DOCKER_SERVICE) psql -U $(PG_USER) -d $(PG_DB)
+docker-rebuild:
+	docker-compose down --remove-orphans
+	docker-compose build --no-cache
+	docker-compose run --rm postgres make prepare-regression
+	docker-compose up -d
 
-reset-db:
-	$(DOCKER_COMPOSE) exec -T $(PG_DOCKER_SERVICE) dropdb --if-exists $(PG_DB)
-	$(DOCKER_COMPOSE) exec -T $(PG_DOCKER_SERVICE) createdb $(PG_DB)
+docker-test:
+	docker-compose exec -T pg_ais_dev sh -c 'cd /app/build && ctest --output-on-failure'
 
-rebuild: clean build
+docker-regression:
+	docker-compose exec -T pg_ais_dev sh -c 'cd /app/sql && PGUSER=postgres $(PG_REGRESS) --inputdir=. --dbname=regression pg_ais_regression'
