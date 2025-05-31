@@ -1,59 +1,78 @@
-#include "ais_core.h"
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
+// ais_core.c
+// (Empty placeholder for future AIS processing logic)
 
-static uint8_t decode_payload_type(const char *payload) {
-    if (!payload || strlen(payload) < 1) return 0;
-    unsigned char ch = payload[0];
-    if (ch < 48 || ch > 119) return 0;
-    ch -= 48;
-    if (ch > 40) ch -= 8;
-    return ch >> 2;  // top 6 bits contain message type
+// pg_ais.c
+#include "postgres.h"
+#include "fmgr.h"
+#include "utils/builtins.h"
+#include "utils/jsonb.h"
+#include "utils/varlena.h"
+#include "lib/stringinfo.h"
+
+#include "pg_ais.h"
+#include "parse_ais.h"
+
+PG_MODULE_MAGIC;
+
+static AISFragmentBuffer frag_buffer;
+
+PG_FUNCTION_INFO_V1(pg_ais_parse);
+Datum
+pg_ais_parse(PG_FUNCTION_ARGS) {
+    if (PG_ARGISNULL(0)) PG_RETURN_NULL();
+
+    const ais *input = (ais *) PG_GETARG_POINTER(0);
+    if (VARSIZE_ANY_EXHDR(input) <= 0) PG_RETURN_NULL();
+
+    char *cstr = ais_to_cstring(input);
+    if (!cstr) PG_RETURN_NULL();
+
+    AISFragment *frag = (AISFragment *) AIS_ALLOC(sizeof(AISFragment));
+    if (!parse_ais_fragment(cstr, frag)) {
+        AIS_FREE(frag);
+        AIS_FREE(cstr);
+        PG_RETURN_NULL();
+    }
+    frag->raw = AIS_STRDUP(cstr);
+
+    int idx = frag->seq - 1;
+    if (idx < 0 || idx >= MAX_PARTS || frag_buffer.parts[idx]) {
+        AIS_FREE(frag);
+        AIS_FREE(cstr);
+        PG_RETURN_NULL();
+    }
+
+    frag_buffer.parts[idx] = frag;
+    frag_buffer.received++;
+
+    AISMessage msg;
+    if (!try_reassemble(&frag_buffer, &msg)) {
+        AIS_FREE(cstr);
+        PG_RETURN_NULL();
+    }
+
+    reset_buffer(&frag_buffer);
+
+    StringInfoData json;
+    initStringInfo(&json);
+    appendStringInfo(&json, "{\"mmsi\":%d,\"lat\":%f,\"lon\":%f,\"speed\":%f,\"heading\":%f}",
+                     msg.mmsi, msg.lat, msg.lon, msg.speed, msg.heading);
+
+    AIS_FREE(cstr);
+    Datum result = DirectFunctionCall1(jsonb_in, CStringGetDatum(json.data));
+    PG_RETURN_DATUM(result);
 }
 
-static bool validate_checksum(const char *sentence) {
-    const char *star = strrchr(sentence, '*');
-    if (!star || star - sentence > AIS_MAX_SENTENCE_LEN - 3) return false;
-
-    unsigned int checksum = 0;
-    for (const char *p = sentence + 1; *p && *p != '*'; ++p)
-        checksum ^= (unsigned char)*p;
-
-    unsigned int expected;
-    if (sscanf(star + 1, "%2x", &expected) != 1) return false;
-    return checksum == expected;
+PG_FUNCTION_INFO_V1(ais_in);
+Datum
+ais_in(PG_FUNCTION_ARGS) {
+    char *str = PG_GETARG_CSTRING(0);
+    PG_RETURN_POINTER(ais_from_cstring_external(str));
 }
 
-bool parse_ais_sentence(const char *sentence, AISMessage *msg) {
-    if (!sentence || !msg || sentence[0] != '!') return false;
-    if (!validate_checksum(sentence)) return false;
-
-    char copy[AIS_MAX_SENTENCE_LEN];
-    strncpy(copy, sentence, AIS_MAX_SENTENCE_LEN);
-    copy[AIS_MAX_SENTENCE_LEN - 1] = '\0';
-
-    char *tokens[10] = {0};
-    int tok_count = 0;
-    for (char *p = strtok(copy, ","); p && tok_count < 10; p = strtok(NULL, ","))
-        tokens[tok_count++] = p;
-
-    if (tok_count < 7) return false;
-
-    strncpy(msg->talker, tokens[0] + 1, 2);  // skip '!'
-    msg->talker[2] = '\0';
-    strncpy(msg->type, tokens[0] + 3, 3);
-    msg->type[3] = '\0';
-
-    msg->total = atoi(tokens[1]);
-    msg->num = atoi(tokens[2]);
-    msg->seq_id = tokens[3][0];
-    msg->channel = tokens[4][0];
-    strncpy(msg->payload, tokens[5], sizeof(msg->payload) - 1);
-    msg->payload[sizeof(msg->payload) - 1] = '\0';
-    msg->fill_bits = atoi(tokens[6]);
-    msg->message_id = decode_payload_type(tokens[5]);
-    msg->valid = true;
-
-    return true;
+PG_FUNCTION_INFO_V1(ais_out);
+Datum
+ais_out(PG_FUNCTION_ARGS) {
+    ais *val = (ais *) PG_GETARG_POINTER(0);
+    PG_RETURN_CSTRING(ais_to_cstring(val));
 }

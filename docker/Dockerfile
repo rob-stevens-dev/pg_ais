@@ -10,6 +10,7 @@ RUN apt-get update && \
     git \
     libcmocka-dev \
     postgresql-server-dev-15 \
+    postgresql-client-15 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set work directory
