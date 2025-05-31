@@ -181,6 +181,21 @@ bool parse_msg_16(AISMessage *msg, const char *payload) {
     return true;
 }
 
+bool parse_msg_17(AISMessage *msg, const char *payload) {
+    msg->type = 17;
+    msg->mmsi = parse_uint(payload, 8, 30);
+    int bin_start = 40;
+    int bin_len = (int)(strlen(payload) * 6) - bin_start;
+    int bin_bytes = bin_len / 8;
+    msg->bin_len = bin_bytes;
+    msg->bin_data = malloc(bin_bytes);
+    if (!msg->bin_data) return false;
+    for (int i = 0; i < bin_bytes; i++) {
+        msg->bin_data[i] = (char)parse_uint(payload, bin_start + i * 8, 8);
+    }
+    return true;
+}
+
 bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
     if (!payload || strlen(payload) < 1) return false;
     int msg_type = parse_uint(payload, 0, 6);
@@ -202,6 +217,7 @@ bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
         case 14: return parse_msg_14(msg, payload);
         case 15: return parse_msg_15(msg, payload);
         case 16: return parse_msg_16(msg, payload);
+        case 17: return parse_msg_17(msg, payload);
 
         default: return false;
     }
