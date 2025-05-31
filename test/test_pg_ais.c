@@ -35,6 +35,16 @@ static void test_msg_3_parsing(void **state) {
     assert_int_equal(msg.mmsi, 123456789); // Replace with real MMSI
 }
 
+static void test_msg_4_parsing(void **state) {
+    AISMessage msg;
+    const char *payload = "45Muq60001G?tTpE>Gbk0?wN0<0";
+    bool ok = parse_ais_payload(&msg, payload, 0);
+    assert_true(ok);
+    assert_int_equal(msg.type, 4);
+    assert_int_equal(msg.mmsi, 123456789); // Replace with real MMSI
+}
+
+
 static void test_valid_fragment_parsing(void **state) {
     const char *input = "!AIVDM,2,1,1,A,55NBsv02>tNDBL@E,0*1C";
     AISFragment frag = {0};
@@ -109,6 +119,7 @@ int main(void) {
         cmocka_unit_test(test_msg_1_parsing),
         cmocka_unit_test(test_msg_2_parsing),
         cmocka_unit_test(test_msg_3_parsing),
+        cmocka_unit_test(test_msg_4_parsing),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }
