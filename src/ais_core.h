@@ -22,6 +22,17 @@ typedef struct {
     uint32_t app_id;
     char *bin_data;
     uint32_t bin_len;
+
+    // Expanded fields for messages 1–3
+    uint8_t repeat;
+    uint8_t nav_status;
+    int8_t rot;
+    uint8_t accuracy;
+    float course;
+    uint8_t timestamp;
+    uint8_t maneuver;
+    uint8_t raim;
+    uint32_t radio;
 } AISMessage;
 
 bool parse_ais_sentence(const char *sentence, AISMessage *msg);
