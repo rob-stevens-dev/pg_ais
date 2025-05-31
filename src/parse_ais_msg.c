@@ -206,6 +206,17 @@ bool parse_msg_18(AISMessage *msg, const char *payload) {
     return true;
 }
 
+bool parse_msg_19(AISMessage *msg, const char *payload) {
+    msg->type = 19;
+    msg->mmsi = parse_uint(payload, 8, 30);
+    msg->speed = parse_speed(payload, 46);
+    msg->lat = parse_lat(payload, 85);
+    msg->lon = parse_lon(payload, 57);
+    msg->heading = parse_heading(payload, 124);
+    msg->vessel_name = parse_string(payload, 143, 120);  // 20 chars * 6 bits
+    return true;
+}
+
 bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
     if (!payload || strlen(payload) < 1) return false;
     int msg_type = parse_uint(payload, 0, 6);
@@ -229,6 +240,7 @@ bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
         case 16: return parse_msg_16(msg, payload);
         case 17: return parse_msg_17(msg, payload);
         case 18: return parse_msg_18(msg, payload);
+        case 19: return parse_msg_19(msg, payload);
 
         default: return false;
     }
