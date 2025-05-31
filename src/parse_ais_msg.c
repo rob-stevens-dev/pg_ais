@@ -172,6 +172,15 @@ bool parse_msg_15(AISMessage *msg, const char *payload) {
     return true;
 }
 
+bool parse_msg_16(AISMessage *msg, const char *payload) {
+    msg->type = 16;
+    msg->mmsi = parse_uint(payload, 8, 30);
+    msg->dest_mmsi = parse_uint(payload, 40, 30);
+    msg->app_id = parse_uint(payload, 70, 12);  // offset1 (12 bits)
+    // Additional destination/offset sets not implemented here
+    return true;
+}
+
 bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
     if (!payload || strlen(payload) < 1) return false;
     int msg_type = parse_uint(payload, 0, 6);
@@ -192,6 +201,7 @@ bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
         case 13: return parse_msg_13(msg, payload);
         case 14: return parse_msg_14(msg, payload);
         case 15: return parse_msg_15(msg, payload);
+        case 16: return parse_msg_16(msg, payload);
 
         default: return false;
     }
