@@ -168,6 +168,17 @@ static void test_msg_15_parsing(void **state) {
     free_ais_message(&msg);
 }
 
+static void test_msg_16_parsing(void **state) {
+    AISMessage msg;
+    const char *payload = "@5Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual payload for msg 16
+    bool ok = parse_ais_payload(&msg, payload, 0);
+    assert_true(ok);
+    assert_int_equal(msg.type, 16);
+    assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
+    assert_int_equal(msg.dest_mmsi, 987654321);  // Replace with expected destination MMSI
+    free_ais_message(&msg);
+}
+
 static void test_valid_fragment_parsing(void **state) {
     const char *input = "!AIVDM,2,1,1,A,55NBsv02>tNDBL@E,0*1C";
     AISFragment frag = {0};
@@ -258,6 +269,7 @@ int main(void) {
         cmocka_unit_test(test_msg_13_parsing),
         cmocka_unit_test(test_msg_14_parsing),
         cmocka_unit_test(test_msg_15_parsing),
+        cmocka_unit_test(test_msg_16_parsing),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }
