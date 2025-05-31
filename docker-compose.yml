@@ -1,18 +1,19 @@
 version: '3.8'
 
 services:
-  pg_ais_dev:
-    image: pg_ais:dev
+  postgres:
+    image: pg_ais:latest
+    container_name: pg_ais_dev
     build:
       context: .
       dockerfile: docker/Dockerfile
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: pg_ais
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pg_ais_dev
     volumes:
-      - ./src:/pg_ais/src
-      - ./sql:/pg_ais/sql
-      - ./test:/pg_ais/test
+      - .:/app
+    working_dir: /app
+    command: ["postgres"]
