@@ -225,6 +225,15 @@ bool parse_msg_20(AISMessage *msg, const char *payload) {
     return true;
 }
 
+bool parse_msg_21(AISMessage *msg, const char *payload) {
+    msg->type = 21;
+    msg->mmsi = parse_uint(payload, 8, 30);
+    msg->lat = parse_lat(payload, 85);
+    msg->lon = parse_lon(payload, 57);
+    msg->vessel_name = parse_string(payload, 112, 120);  // name of aid-to-navigation
+    return true;
+}
+
 bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
     if (!payload || strlen(payload) < 1) return false;
     int msg_type = parse_uint(payload, 0, 6);
@@ -251,6 +260,7 @@ bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
         case 19: return parse_msg_19(msg, payload);
 
         case 20: return parse_msg_20(msg, payload);
+        case 21: return parse_msg_21(msg, payload);
 
         default: return false;
     }
