@@ -1,3 +1,14 @@
+// File: src/parse_ais_msg.h
+#ifndef PARSE_AIS_MSG_H
+#define PARSE_AIS_MSG_H
+
+#include "pg_ais.h"
+
+bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits);
+
+#endif
+
+// ------------------------------------------
 // File: src/parse_ais_msg.c
 #include "parse_ais_msg.h"
 #include "bitfield.h"
@@ -36,9 +47,18 @@ bool parse_msg_3(AISMessage *msg, const char *payload) {
 bool parse_msg_4(AISMessage *msg, const char *payload) {
     msg->type = 4;
     msg->mmsi = parse_uint(payload, 8, 30);
-    // Additional fields like timestamp, position accuracy, etc. can be added later.
     msg->lat = parse_lat(payload, 89);
     msg->lon = parse_lon(payload, 61);
+    return true;
+}
+
+bool parse_msg_5(AISMessage *msg, const char *payload) {
+    msg->type = 5;
+    msg->mmsi = parse_uint(payload, 8, 30);
+    // Example: fetch IMO and name, would need to extend struct
+    // uint32_t imo = parse_uint(payload, 40, 30);
+    // char *vessel_name = parse_string(payload, 112, 120);
+    // msg->vessel_name = vessel_name; // extend struct to hold this
     return true;
 }
 
@@ -50,8 +70,7 @@ bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
         case 2: return parse_msg_2(msg, payload);
         case 3: return parse_msg_3(msg, payload);
         case 4: return parse_msg_4(msg, payload);
-        // case 5: return parse_msg_5(...);
-        // ...
+        case 5: return parse_msg_5(msg, payload);
         default: return false;
     }
 }
