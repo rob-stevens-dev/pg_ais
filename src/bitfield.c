@@ -48,7 +48,7 @@ char *parse_string(const char *payload, int start, int len) {
     int byte_len = (len + 5) / 6;
     char *out = malloc(byte_len + 1);
     for (int i = 0; i < byte_len; i++) {
-        out[i] = sixbit_to_uint(payload[i]) + 48;
+        out[i] = sixbit_to_uint(payload[i + start / 6]) + 48;
     }
     out[byte_len] = '\0';
     return out;

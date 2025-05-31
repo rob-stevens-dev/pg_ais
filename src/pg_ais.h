@@ -51,7 +51,11 @@ typedef struct {
     float lon;
     float speed;
     float heading;
+    uint32_t imo;
+    char *callsign;
+    char *vessel_name;
 } AISMessage;
+
 
 // C-string converters
 char *ais_to_cstring(const ais *value);

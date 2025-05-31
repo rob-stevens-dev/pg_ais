@@ -55,10 +55,9 @@ bool parse_msg_4(AISMessage *msg, const char *payload) {
 bool parse_msg_5(AISMessage *msg, const char *payload) {
     msg->type = 5;
     msg->mmsi = parse_uint(payload, 8, 30);
-    // Example: fetch IMO and name, would need to extend struct
-    // uint32_t imo = parse_uint(payload, 40, 30);
-    // char *vessel_name = parse_string(payload, 112, 120);
-    // msg->vessel_name = vessel_name; // extend struct to hold this
+    msg->imo = parse_uint(payload, 40, 30);
+    msg->callsign = parse_string(payload, 70, 42);
+    msg->vessel_name = parse_string(payload, 112, 120);
     return true;
 }
 

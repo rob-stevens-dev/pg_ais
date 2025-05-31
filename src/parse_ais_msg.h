@@ -7,4 +7,3 @@
 bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits);
 
 #endif
-
