@@ -248,6 +248,19 @@ bool parse_msg_23(AISMessage *msg, const char *payload) {
     return true;
 }
 
+bool parse_msg_24(AISMessage *msg, const char *payload) {
+    msg->type = 24;
+    msg->mmsi = parse_uint(payload, 8, 30);
+    int part = parse_uint(payload, 38, 2);
+    if (part == 0) {
+        msg->vessel_name = parse_string(payload, 40, 120);  // 20 characters
+    } else if (part == 1) {
+        msg->callsign = parse_string(payload, 40, 42);      // 7 characters
+        // Additional fields like ship type, dimensions, etc. could be added here
+    }
+    return true;
+}
+
 bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
     if (!payload || strlen(payload) < 1) return false;
     int msg_type = parse_uint(payload, 0, 6);
@@ -277,6 +290,7 @@ bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
         case 21: return parse_msg_21(msg, payload);
         case 22: return parse_msg_22(msg, payload);
         case 23: return parse_msg_23(msg, payload);
+        case 24: return parse_msg_24(msg, payload);
 
         default: return false;
     }
