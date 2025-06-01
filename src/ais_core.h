@@ -23,7 +23,7 @@ typedef struct {
     char *bin_data;
     uint32_t bin_len;
 
-    // Expanded fields for messages 1–3
+    // Common fields
     uint8_t repeat;
     uint8_t nav_status;
     int8_t rot;
@@ -33,6 +33,15 @@ typedef struct {
     uint8_t maneuver;
     uint8_t raim;
     uint32_t radio;
+
+    // UTC and Fix Type
+    uint16_t year;
+    uint8_t month;
+    uint8_t day;
+    uint8_t hour;
+    uint8_t minute;
+    uint8_t second;
+    uint8_t fix_type;
 } AISMessage;
 
 bool parse_ais_sentence(const char *sentence, AISMessage *msg);
