@@ -23,8 +23,7 @@ RETURNS jsonb
 AS 'pg_ais', 'pg_ais_parse'
 LANGUAGE C IMMUTABLE STRICT;
 
--- Optional: fragment buffer reset
--- CREATE FUNCTION pg_ais_reset()
--- RETURNS void
--- AS 'pg_ais', 'pg_ais_reset'
--- LANGUAGE C VOLATILE STRICT;
+-- Debug support
+CREATE FUNCTION pg_ais_debug(text, text DEFAULT 'json') RETURNS jsonb
+AS 'MODULE_PATHNAME', 'pg_ais_debug'
+LANGUAGE C STRICT;
