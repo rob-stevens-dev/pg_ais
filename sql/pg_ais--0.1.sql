@@ -66,3 +66,23 @@ CREATE OR REPLACE FUNCTION pg_ais_point(text)
 RETURNS bytea
 AS 'MODULE_PATHNAME', 'pg_ais_point_geom'
 LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION pg_ais_get_text_field(sentence ais, fieldname text)
+RETURNS text
+AS 'MODULE_PATHNAME', 'pg_ais_get_text_field'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION pg_ais_get_int_field(sentence ais, fieldname text)
+RETURNS integer
+AS 'MODULE_PATHNAME', 'pg_ais_get_int_field'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION pg_ais_get_float_field(sentence ais, fieldname text)
+RETURNS double precision
+AS 'MODULE_PATHNAME', 'pg_ais_get_float_field'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION pg_ais_get_bool_field(sentence ais, fieldname text)
+RETURNS boolean
+AS 'MODULE_PATHNAME', 'pg_ais_get_bool_field'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;

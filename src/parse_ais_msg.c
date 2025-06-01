@@ -2,6 +2,9 @@
 #include "bitfield.h"
 #include <string.h>
 
+/* NOTE: All functions here should be declared IMMUTABLE in SQL to assist planner optimizations */
+
+// Parses AIS message types 1, 2, and 3 (Position Reports from Class A vessels)
 bool parse_msg_1_2_3(AISMessage *msg, const char *payload) {
     msg->type = parse_uint(payload, 0, 6);
     msg->repeat = parse_uint(payload, 6, 2);
@@ -30,6 +33,7 @@ bool parse_msg_1_2_3(AISMessage *msg, const char *payload) {
     return true;
 }
 
+// Parses AIS message types 4 and 11 (Base Station Reports)
 bool parse_msg_4_11(AISMessage *msg, const char *payload) {
     msg->type = parse_uint(payload, 0, 6);
     msg->repeat = parse_uint(payload, 6, 2);
@@ -64,12 +68,14 @@ bool parse_msg_4_11(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 5 (Static and Voyage Related Data)
 bool parse_msg_5(AISMessage *msg, const char *payload) {
     msg->type = 5;
     msg->mmsi = parse_uint(payload, 8, 30);
     msg->imo = parse_uint(payload, 40, 30);
-    msg->callsign = parse_string(payload, 70, 42);
-    msg->vessel_name = parse_string(payload, 112, 120);
+    msg->callsign = parse_string_utf8(payload, 70, 42);
+    msg->vessel_name = parse_string_utf8(payload, 112, 120);
     msg->ship_type = parse_uint(payload, 232, 8);
     msg->dimension_to_bow = parse_uint(payload, 240, 9);
     msg->dimension_to_stern = parse_uint(payload, 249, 9);
@@ -81,7 +87,7 @@ bool parse_msg_5(AISMessage *msg, const char *payload) {
     msg->eta_hour = parse_uint(payload, 283, 5);
     msg->eta_minute = parse_uint(payload, 288, 6);
     msg->draught = parse_uint(payload, 294, 8) / 10.0;
-    msg->destination = parse_string(payload, 302, 120);
+    msg->destination = parse_string_utf8(payload, 302, 120);
 
     // Validation
     if (msg->eta_month < 1 || msg->eta_month > 12) return false;
@@ -96,6 +102,8 @@ bool parse_msg_5(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 6 (Binary Addressed Message)
 bool parse_msg_6(AISMessage *msg, const char *payload) {
     msg->type = 6;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -124,6 +132,8 @@ bool parse_msg_6(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 7 (Binary Acknowledge)
 bool parse_msg_7(AISMessage *msg, const char *payload) {
     msg->type = 7;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -152,6 +162,8 @@ bool parse_msg_7(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 8 (Binary Broadcast Message)
 bool parse_msg_8(AISMessage *msg, const char *payload) {
     msg->type = 8;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -178,6 +190,8 @@ bool parse_msg_8(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 9 (Standard SAR Aircraft Position Report)
 bool parse_msg_9(AISMessage *msg, const char *payload) {
     msg->type = 9;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -208,6 +222,8 @@ bool parse_msg_9(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 10 (UTC/Date Inquiry)
 bool parse_msg_10(AISMessage *msg, const char *payload) {
     msg->type = 10;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -221,6 +237,8 @@ bool parse_msg_10(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 12 (Safety-Related Message Addressed)
 bool parse_msg_12(AISMessage *msg, const char *payload) {
     msg->type = 12;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -233,7 +251,7 @@ bool parse_msg_12(AISMessage *msg, const char *payload) {
     int text_start = 72;
     int bit_len = (int)(strlen(payload) * 6) - text_start;
     msg->bin_len = bit_len / 6;
-    msg->bin_data = parse_string(payload, text_start, bit_len);  // 6-bit ASCII safety text
+    msg->bin_data = parse_string_utf8(payload, text_start, bit_len);  // 6-bit ASCII safety text
 
     // Validation
     if (msg->dest_mmsi == 0 || msg->dest_mmsi > 999999999) return false;
@@ -242,7 +260,10 @@ bool parse_msg_12(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 13 (Safety-Related Acknowledge)
 bool parse_msg_13(AISMessage *msg, const char *payload) {
+
     msg->type = 13;
     msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
@@ -251,7 +272,7 @@ bool parse_msg_13(AISMessage *msg, const char *payload) {
     int text_start = 40;
     int bit_len = (int)(strlen(payload) * 6) - text_start;
     msg->bin_len = bit_len / 6;
-    msg->bin_data = parse_string(payload, text_start, bit_len);  // 6-bit ASCII broadcast safety message
+    msg->bin_data = parse_string_utf8(payload, text_start, bit_len);  // 6-bit ASCII broadcast safety message
 
     // Validation
     if (!msg->bin_data || strlen(msg->bin_data) == 0) return false;
@@ -259,6 +280,8 @@ bool parse_msg_13(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 14 (Safety-Related Broadcast Message)
 bool parse_msg_14(AISMessage *msg, const char *payload) {
     msg->type = 14;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -268,7 +291,7 @@ bool parse_msg_14(AISMessage *msg, const char *payload) {
     int text_start = 40;
     int bit_len = (int)(strlen(payload) * 6) - text_start;
     msg->bin_len = bit_len / 6;
-    msg->bin_data = parse_string(payload, text_start, bit_len);  // 6-bit ASCII safety-related text
+    msg->bin_data = parse_string_utf8(payload, text_start, bit_len);  // 6-bit ASCII safety-related text
 
     // Validation
     if (!msg->bin_data || strlen(msg->bin_data) == 0) return false;
@@ -276,6 +299,8 @@ bool parse_msg_14(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 15 (Interrogation)
 bool parse_msg_15(AISMessage *msg, const char *payload) {
     msg->type = 15;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -303,6 +328,8 @@ bool parse_msg_15(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 16 (Assigned Mode Command)
 bool parse_msg_16(AISMessage *msg, const char *payload) {
     msg->type = 16;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -327,6 +354,8 @@ bool parse_msg_16(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 17 (DGNSS Broadcast Binary Message)
 bool parse_msg_17(AISMessage *msg, const char *payload) {
     msg->type = 17;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -349,6 +378,8 @@ bool parse_msg_17(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message types 18, 19, 24 (Class B Position Reports)
 bool parse_msg_18_19_24(AISMessage *msg, const char *payload) {
     msg->type = parse_uint(payload, 0, 6);
     msg->repeat = parse_uint(payload, 6, 2);
@@ -373,8 +404,8 @@ bool parse_msg_18_19_24(AISMessage *msg, const char *payload) {
 
     if (msg->type == 19) {
         msg->ship_type = parse_uint(payload, 143, 8);
-        msg->callsign = parse_string(payload, 151, 42);
-        msg->vessel_name = parse_string(payload, 193, 120);
+        msg->callsign = parse_string_utf8(payload, 151, 42);
+        msg->vessel_name = parse_string_utf8(payload, 193, 120);
         msg->dimension_to_bow = parse_uint(payload, 313, 9);
         msg->dimension_to_stern = parse_uint(payload, 322, 9);
         msg->dimension_to_port = parse_uint(payload, 331, 6);
@@ -383,9 +414,9 @@ bool parse_msg_18_19_24(AISMessage *msg, const char *payload) {
     } else if (msg->type == 24) {
         int part = parse_uint(payload, 38, 2);
         if (part == 0) {
-            msg->vessel_name = parse_string(payload, 40, 120);
+            msg->vessel_name = parse_string_utf8(payload, 40, 120);
         } else if (part == 1) {
-            msg->callsign = parse_string(payload, 40, 42);
+            msg->callsign = parse_string_utf8(payload, 40, 42);
             msg->ship_type = parse_uint(payload, 82, 8);
             msg->dimension_to_bow = parse_uint(payload, 90, 9);
             msg->dimension_to_stern = parse_uint(payload, 99, 9);
@@ -398,6 +429,8 @@ bool parse_msg_18_19_24(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 20 (Data Link Management)
 bool parse_msg_20(AISMessage *msg, const char *payload) {
     msg->type = 20;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -434,12 +467,14 @@ bool parse_msg_20(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 21 (Aids-to-Navigation Report)
 bool parse_msg_21(AISMessage *msg, const char *payload) {
     msg->type = 21;
     msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
     msg->aid_type = parse_uint(payload, 38, 5);
-    msg->vessel_name = parse_string(payload, 43, 120);
+    msg->vessel_name = parse_string_utf8(payload, 43, 120);
     msg->accuracy = parse_uint(payload, 163, 1);
     msg->lon = parse_lon(payload, 164);
     msg->lat = parse_lat(payload, 192);
@@ -467,6 +502,8 @@ bool parse_msg_21(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 22 (Channel Management)
 bool parse_msg_22(AISMessage *msg, const char *payload) {
     msg->type = 22;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -496,6 +533,8 @@ bool parse_msg_22(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 23 (Group Assignment Command)
 bool parse_msg_23(AISMessage *msg, const char *payload) {
     msg->type = 23;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -523,6 +562,8 @@ bool parse_msg_23(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 25 (Binary Message, Single Slot)
 bool parse_msg_25(AISMessage *msg, const char *payload) {
     msg->type = 25;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -556,6 +597,8 @@ bool parse_msg_25(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 26 (Binary Message, Multiple Slot)
 bool parse_msg_26(AISMessage *msg, const char *payload) {
     msg->type = 26;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -590,6 +633,8 @@ bool parse_msg_26(AISMessage *msg, const char *payload) {
     return true;
 }
 
+
+// Parses AIS message type 27 (Long Range AIS Broadcast Message)
 bool parse_msg_27(AISMessage *msg, const char *payload) {
     msg->type = 27;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -612,7 +657,10 @@ bool parse_msg_27(AISMessage *msg, const char *payload) {
     return true;
 }
 
+// Delegates to specific parser based on message type
 bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
+    (void)fill_bits;
+    
     if (!payload || strlen(payload) < 1) return false;
     int msg_type = parse_uint(payload, 0, 6);
     switch (msg_type) {

@@ -222,15 +222,13 @@ pg_ais_fields(PG_FUNCTION_ARGS) {
 PG_FUNCTION_INFO_V1(pg_ais_point);
 Datum
 pg_ais_point(PG_FUNCTION_ARGS) {
-    text *txt = PG_GETARG_TEXT_PP(0);
-    char *input = text_to_cstring(txt);
-
+    bytea *raw = PG_GETARG_BYTEA_P(0);
     AISMessage msg;
-    if (!parse_ais_from_text(input, &msg)) {
-        ereport(ERROR, (errmsg("invalid AIS message")));
+
+    if (!parse_ais_message(raw, &msg)) {
+        PG_RETURN_NULL();
     }
 
-    // Validate lat/lon range
     if (msg.lat < -90 || msg.lat > 90 || msg.lon < -180 || msg.lon > 180) {
         free_ais_message(&msg);
         PG_RETURN_NULL();
@@ -274,6 +272,101 @@ pg_ais_point_geom(PG_FUNCTION_ARGS) {
 
     free_ais_message(&msg);
     PG_RETURN_BYTEA_P(cstring_to_text_with_len((const char *)wkb, sizeof(wkb)));
+}
+
+
+PG_FUNCTION_INFO_V1(pg_ais_get_text_field);
+Datum
+pg_ais_get_text_field(PG_FUNCTION_ARGS)
+{
+    bytea *raw = PG_GETARG_BYTEA_P(0);
+    text *fieldname = PG_GETARG_TEXT_P(1);
+    AISMessage msg;
+    char *cstr = text_to_cstring(fieldname);
+
+    if (!parse_ais_message(raw, &msg)) {
+        PG_RETURN_NULL();
+    }
+
+    if (strcmp(cstr, "shipname") == 0 && msg.shipname) {
+        PG_RETURN_TEXT_P(cstring_to_text(msg.shipname));
+    } else if (strcmp(cstr, "callsign") == 0 && msg.callsign) {
+        PG_RETURN_TEXT_P(cstring_to_text(msg.callsign));
+    }
+
+    PG_RETURN_NULL();
+}
+
+
+PG_FUNCTION_INFO_V1(pg_ais_get_int_field);
+Datum
+pg_ais_get_int_field(PG_FUNCTION_ARGS) {
+    bytea *raw = PG_GETARG_BYTEA_P(0);
+    text *fieldname = PG_GETARG_TEXT_P(1);
+    char *cstr = text_to_cstring(fieldname);
+    AISMessage msg;
+
+    if (!parse_ais_message(raw, &msg)) {
+        PG_RETURN_NULL();
+    }
+
+    if (strcmp(cstr, "mmsi") == 0 && msg.mmsi > 0) {
+        PG_RETURN_INT32(msg.mmsi);
+    } else if (strcmp(cstr, "heading") == 0 && msg.heading >= 0 && msg.heading <= 359) {
+        PG_RETURN_INT32(msg.heading);
+    } else if (strcmp(cstr, "nav_status") == 0 && msg.nav_status >= 0 && msg.nav_status <= 15) {
+        PG_RETURN_INT32(msg.nav_status);
+    } else if (strcmp(cstr, "course") == 0 && msg.course >= 0 && msg.course <= 360) {
+        PG_RETURN_INT32((int)(msg.course));
+    }
+
+    PG_RETURN_NULL();
+}
+
+
+PG_FUNCTION_INFO_V1(pg_ais_get_float_field);
+Datum
+pg_ais_get_float_field(PG_FUNCTION_ARGS) {
+    bytea *raw = PG_GETARG_BYTEA_P(0);
+    text *fieldname = PG_GETARG_TEXT_P(1);
+    char *cstr = text_to_cstring(fieldname);
+    AISMessage msg;
+
+    if (!parse_ais_message(raw, &msg)) {
+        PG_RETURN_NULL();
+    }
+
+    if (strcmp(cstr, "speed") == 0 && msg.speed >= 0) {
+        PG_RETURN_FLOAT8(msg.speed);
+    } else if (strcmp(cstr, "course") == 0 && msg.course >= 0) {
+        PG_RETURN_FLOAT8(msg.course);
+    }
+
+    PG_RETURN_NULL();
+}
+
+
+PG_FUNCTION_INFO_V1(pg_ais_get_bool_field);
+Datum
+pg_ais_get_bool_field(PG_FUNCTION_ARGS) {
+    bytea *raw = PG_GETARG_BYTEA_P(0);
+    text *fieldname = PG_GETARG_TEXT_P(1);
+    char *cstr = text_to_cstring(fieldname);
+    AISMessage msg;
+
+    if (!parse_ais_message(raw, &msg)) {
+        PG_RETURN_NULL();
+    }
+
+    if (strcmp(cstr, "raim") == 0) {
+        PG_RETURN_BOOL(msg.raim);
+    } else if (strcmp(cstr, "accuracy") == 0) {
+        PG_RETURN_BOOL(msg.accuracy);
+    } else if (strcmp(cstr, "assigned") == 0) {
+        PG_RETURN_BOOL(msg.assigned);
+    }
+
+    PG_RETURN_NULL();
 }
 
 

@@ -3,6 +3,9 @@
 #include <stdarg.h>   // for va_list
 #include <setjmp.h>   // for jmp_buf
 #include <cmocka.h>
+
+#include "utils/geo_decls.h"
+#include "utils/builtins.h"
 #include "../src/pg_ais.h"
 #include "../src/parse_ais.h"
 #include "../src/parse_ais_msg.h"
@@ -46,6 +49,7 @@ static void test_msg_1_2_3_parsing(void **state) {
     free_ais_message(&msg);
 }
 
+
 static void test_msg_4_11_parsing(void **state) {
     AISMessage msg;
     const char *payload = "45Muq60001G?tTpE>Gbk0?wN0<0";  // Example payload for message 4
@@ -68,6 +72,7 @@ static void test_msg_4_11_parsing(void **state) {
     free_ais_message(&msg);
 }
 
+
 static void test_msg_5_parsing(void **state) {
     AISMessage msg;
     const char *payload = "55Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual full message 5 payload
@@ -84,6 +89,7 @@ static void test_msg_5_parsing(void **state) {
     free_ais_message(&msg);
 }
 
+
 static void test_msg_6_parsing(void **state) {
     AISMessage msg;
     const char *payload = "65Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual payload for msg 6
@@ -98,6 +104,7 @@ static void test_msg_6_parsing(void **state) {
     assert_true(msg.bin_len > 0);
     free_ais_message(&msg);
 }
+
 
 static void test_msg_7_parsing(void **state) {
     AISMessage msg;
@@ -114,6 +121,7 @@ static void test_msg_7_parsing(void **state) {
     free_ais_message(&msg);
 }
 
+
 static void test_msg_8_parsing(void **state) {
     AISMessage msg;
     const char *payload = "85Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual payload for msg 8
@@ -127,6 +135,7 @@ static void test_msg_8_parsing(void **state) {
     assert_true(msg.bin_len > 0);
     free_ais_message(&msg);
 }
+
 
 static void test_msg_9_parsing(void **state) {
     AISMessage msg;
@@ -146,6 +155,7 @@ static void test_msg_9_parsing(void **state) {
     free_ais_message(&msg);
 }
 
+
 static void test_msg_10_parsing(void **state) {
     AISMessage msg;
     const char *payload = ":5Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual payload for msg 10
@@ -158,6 +168,7 @@ static void test_msg_10_parsing(void **state) {
     assert_int_equal(msg.spare2, msg.spare2);
     free_ais_message(&msg);
 }
+
 
 static void test_msg_12_parsing(void **state) {
     AISMessage msg;
@@ -174,6 +185,7 @@ static void test_msg_12_parsing(void **state) {
     free_ais_message(&msg);
 }
 
+
 static void test_msg_13_parsing(void **state) {
     AISMessage msg;
     const char *payload = "=5Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual payload for msg 13
@@ -187,6 +199,7 @@ static void test_msg_13_parsing(void **state) {
     free_ais_message(&msg);
 }
 
+
 static void test_msg_14_parsing(void **state) {
     AISMessage msg;
     const char *payload = ">5Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual payload for msg 14
@@ -199,6 +212,7 @@ static void test_msg_14_parsing(void **state) {
     assert_true(msg.bin_len > 0);
     free_ais_message(&msg);
 }
+
 
 static void test_msg_15_parsing(void **state) {
     AISMessage msg;
@@ -217,6 +231,7 @@ static void test_msg_15_parsing(void **state) {
     free_ais_message(&msg);
 }
 
+
 static void test_msg_16_parsing(void **state) {
     AISMessage msg;
     const char *payload = "@5Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual payload for msg 16
@@ -232,6 +247,7 @@ static void test_msg_16_parsing(void **state) {
     free_ais_message(&msg);
 }
 
+
 static void test_msg_17_parsing(void **state) {
     AISMessage msg;
     const char *payload = "A5Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual payload for msg 17
@@ -244,6 +260,7 @@ static void test_msg_17_parsing(void **state) {
     assert_non_null(msg.bin_data);
     free_ais_message(&msg);
 }
+
 
 static void test_msg_18_parsing(void **state) {
     AISMessage msg;
@@ -258,6 +275,7 @@ static void test_msg_18_parsing(void **state) {
     free_ais_message(&msg);
 }
 
+
 static void test_msg_19_parsing(void **state) {
     AISMessage msg;
     const char *payload = "C5Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual payload for msg 19
@@ -269,6 +287,7 @@ static void test_msg_19_parsing(void **state) {
     assert_true(msg.dimension_to_bow > 0);
     free_ais_message(&msg);
 }
+
 
 static void test_msg_20_parsing(void **state) {
     AISMessage msg;
@@ -283,6 +302,7 @@ static void test_msg_20_parsing(void **state) {
     assert_true(msg.increment1 > 0);
     free_ais_message(&msg);
 }
+
 
 static void test_msg_21_parsing(void **state) {
     AISMessage msg;
@@ -300,6 +320,7 @@ static void test_msg_21_parsing(void **state) {
     free_ais_message(&msg);
 }
 
+
 static void test_msg_22_parsing(void **state) {
     AISMessage msg;
     const char *payload = "F5Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual payload for msg 22
@@ -314,6 +335,7 @@ static void test_msg_22_parsing(void **state) {
     assert_true(msg.sw_lon != 181.0);
     free_ais_message(&msg);
 }
+
 
 static void test_msg_23_parsing(void **state) {
     AISMessage msg;
@@ -330,6 +352,7 @@ static void test_msg_23_parsing(void **state) {
     free_ais_message(&msg);
 }
 
+
 static void test_msg_24_parsing(void **state) {
     AISMessage msg;
     const char *payload = "H5Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual payload for msg 24
@@ -339,6 +362,7 @@ static void test_msg_24_parsing(void **state) {
     assert_true(msg.callsign || msg.vessel_name);
     free_ais_message(&msg);
 }
+
 
 static void test_msg_25_parsing(void **state) {
     AISMessage msg;
@@ -355,6 +379,7 @@ static void test_msg_25_parsing(void **state) {
     free_ais_message(&msg);
 }
 
+
 static void test_msg_26_parsing(void **state) {
     AISMessage msg;
     const char *payload = "J5Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual payload for msg 26
@@ -370,6 +395,7 @@ static void test_msg_26_parsing(void **state) {
     free_ais_message(&msg);
 }
 
+
 static void test_msg_27_parsing(void **state) {
     AISMessage msg;
     const char *payload = "K5Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual payload for msg 27
@@ -383,6 +409,7 @@ static void test_msg_27_parsing(void **state) {
     assert_true(msg.course >= 0);
     free_ais_message(&msg);
 }
+
 
 static void test_valid_fragment_parsing(void **state) {
     const char *input = "!AIVDM,2,1,1,A,55NBsv02>tNDBL@E,0*1C";
@@ -398,6 +425,7 @@ static void test_valid_fragment_parsing(void **state) {
     assert_int_equal(frag.fill_bits, 0);
 }
 
+
 static void test_invalid_fragment_parsing(void **state) {
     const char *input = "INVALID,NMEA,SENTENCE";
     AISFragment frag = {0};
@@ -406,6 +434,7 @@ static void test_invalid_fragment_parsing(void **state) {
 
     assert_false(parse_ais_fragment(input, &frag));
 }
+
 
 static void test_successful_reassembly(void **state) {
     AISFragmentBuffer buffer = {0};
@@ -430,6 +459,28 @@ static void test_successful_reassembly(void **state) {
     reset_buffer(&buffer);
 }
 
+
+static void test_pg_ais_get_text_field_shipname(void **state) {
+    const char *nmea = "!AIVDM,1,1,,B,H42Owk@2BDPh3@<T4pM00000000,0*6D";
+    text *field = cstring_to_text("shipname");
+    bytea *raw = cstring_to_text_with_len(nmea, strlen(nmea));
+
+    Datum result = DirectFunctionCall2(pg_ais_get_text_field, PointerGetDatum(raw), PointerGetDatum(field));
+    assert_non_null(result);
+    assert_string_equal(TextDatumGetCString(result), "SEAWAY");
+}
+
+
+static void test_pg_ais_get_text_field_unsupported(void **state) {
+    const char *nmea = "!AIVDM,1,1,,B,H42Owk@2BDPh3@<T4pM00000000,0*6D";
+    text *field = cstring_to_text("unsupported_field");
+    bytea *raw = cstring_to_text_with_len(nmea, strlen(nmea));
+
+    Datum result = DirectFunctionCall2(pg_ais_get_text_field, PointerGetDatum(raw), PointerGetDatum(field));
+    assert_true(DatumGetPointer(result) == NULL);
+}
+
+
 static void test_incomplete_reassembly(void **state) {
     AISFragmentBuffer buffer = {0};
     const char *part1 = "!AIVDM,2,1,3,A,part1only,0*1C";
@@ -447,6 +498,105 @@ static void test_incomplete_reassembly(void **state) {
 
     reset_buffer(&buffer);
 }
+
+
+static void test_pg_ais_point_valid(void **state) {
+    const char *nmea = "!AIVDM,1,1,,B,13aG?P0P00PD;88MD5MTDww@2D0T,0*1C";
+    bytea *raw = cstring_to_text_with_len(nmea, strlen(nmea));
+
+    Datum result = DirectFunctionCall1(pg_ais_point, PointerGetDatum(raw));
+    POINT *pt = DatumGetPointP(result);
+    assert_true(pt->x > -180 && pt->x < 180);
+    assert_true(pt->y > -90 && pt->y < 90);
+}
+
+
+static void test_pg_ais_point_invalid(void **state) {
+    const char *bad_nmea = "!AIVDM,1,1,,B,INVALID,0*00";
+    bytea *raw = cstring_to_text_with_len(bad_nmea, strlen(bad_nmea));
+
+    Datum result = DirectFunctionCall1(pg_ais_point, PointerGetDatum(raw));
+    assert_true(DatumGetPointer(result) == NULL);
+}
+
+
+static void test_pg_ais_get_int_field_mmsi(void **state) {
+    const char *nmea = "!AIVDM,1,1,,B,13aG?P0P00PD;88MD5MTDww@2D0T,0*1C";
+    text *field = cstring_to_text("mmsi");
+    bytea *raw = cstring_to_text_with_len(nmea, strlen(nmea));
+
+    Datum result = DirectFunctionCall2(pg_ais_get_int_field, PointerGetDatum(raw), PointerGetDatum(field));
+    assert_int_equal(DatumGetInt32(result), 366053209);
+}
+
+
+static void test_pg_ais_get_int_field_unsupported(void **state) {
+    const char *nmea = "!AIVDM,1,1,,B,13aG?P0P00PD;88MD5MTDww@2D0T,0*1C";
+    text *field = cstring_to_text("foobar");
+    bytea *raw = cstring_to_text_with_len(nmea, strlen(nmea));
+
+    Datum result = DirectFunctionCall2(pg_ais_get_int_field, PointerGetDatum(raw), PointerGetDatum(field));
+    assert_true(DatumGetPointer(result) == NULL);
+}
+
+
+static void test_pg_ais_get_float_field_speed(void **state) {
+    const char *nmea = "!AIVDM,1,1,,B,13aG?P0P00PD;88MD5MTDww@2D0T,0*1C";
+    text *field = cstring_to_text("speed");
+    bytea *raw = cstring_to_text_with_len(nmea, strlen(nmea));
+
+    Datum result = DirectFunctionCall2(pg_ais_get_float_field, PointerGetDatum(raw), PointerGetDatum(field));
+    double speed = DatumGetFloat8(result);
+    assert_true(speed >= 0.0);
+}
+
+static void test_pg_ais_get_float_field_unsupported(void **state) {
+    const char *nmea = "!AIVDM,1,1,,B,13aG?P0P00PD;88MD5MTDww@2D0T,0*1C";
+    text *field = cstring_to_text("foobar");
+    bytea *raw = cstring_to_text_with_len(nmea, strlen(nmea));
+
+    Datum result = DirectFunctionCall2(pg_ais_get_float_field, PointerGetDatum(raw), PointerGetDatum(field));
+    assert_true(DatumGetPointer(result) == NULL);
+}
+
+
+static void test_pg_ais_get_bool_field_raim(void **state) {
+    const char *nmea = "!AIVDM,1,1,,B,13aG?P0P00PD;88MD5MTDww@2D0T,0*1C";
+    text *field = cstring_to_text("raim");
+    bytea *raw = cstring_to_text_with_len(nmea, strlen(nmea));
+
+    Datum result = DirectFunctionCall2(pg_ais_get_bool_field, PointerGetDatum(raw), PointerGetDatum(field));
+    assert_true(DatumGetBool(result) == false);
+}
+
+
+static void test_pg_ais_get_bool_field_unsupported(void **state) {
+    const char *nmea = "!AIVDM,1,1,,B,13aG?P0P00PD;88MD5MTDww@2D0T,0*1C";
+    text *field = cstring_to_text("foobar");
+    bytea *raw = cstring_to_text_with_len(nmea, strlen(nmea));
+
+    Datum result = DirectFunctionCall2(pg_ais_get_bool_field, PointerGetDatum(raw), PointerGetDatum(field));
+    assert_true(DatumGetPointer(result) == NULL);
+}
+
+
+static void test_parse_string_utf8_basic(void **state) {
+    // This payload represents "TEST " using 6-bit ASCII (in packed form):
+    const char *payload = "55NB5D0";  // Simulated base64-like packed ASCII chars
+    char *decoded = parse_string_utf8(payload, 0, 30);  // 5 chars * 6 bits = 30
+    assert_string_equal(decoded, "TEST");
+    free(decoded);
+}
+
+
+static void test_parse_string_utf8_trailing_spaces(void **state) {
+    // This simulates "TEST  " (with trailing @/spaces)
+    const char *payload = "55NB5D000";  // 7 chars = 42 bits
+    char *decoded = parse_string_utf8(payload, 0, 42);
+    assert_string_equal(decoded, "TEST");
+    free(decoded);
+}
+
 
 int main(void) {
     const struct CMUnitTest tests[] = {
@@ -478,6 +628,18 @@ int main(void) {
         cmocka_unit_test(test_msg_25_parsing),
         cmocka_unit_test(test_msg_26_parsing),
         cmocka_unit_test(test_msg_27_parsing),
+        cmocka_unit_test(test_pg_ais_get_text_field_shipname),
+        cmocka_unit_test(test_pg_ais_get_text_field_unsupported),
+        cmocka_unit_test(test_pg_ais_point_valid),
+        cmocka_unit_test(test_pg_ais_point_invalid),
+        cmocka_unit_test(test_pg_ais_get_int_field_mmsi),
+        cmocka_unit_test(test_pg_ais_get_int_field_unsupported),
+        cmocka_unit_test(test_pg_ais_get_float_field_speed),
+        cmocka_unit_test(test_pg_ais_get_float_field_unsupported),
+        cmocka_unit_test(test_pg_ais_get_bool_field_raim),
+        cmocka_unit_test(test_pg_ais_get_bool_field_unsupported),
+        cmocka_unit_test(test_parse_string_utf8_basic),
+        cmocka_unit_test(test_parse_string_utf8_trailing_spaces),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }

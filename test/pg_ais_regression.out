@@ -27,3 +27,73 @@ CREATE TABLE test_ais (id serial, sentence ais);
 --------------
  
 (1 row)
+
+ id | shipname 
+----+----------
+  1 | SEAWAY
+(1 row)
+
+ should_be_null 
+----------------
+ 
+(1 row)
+
+     pg_ais_point     
+-----------------------
+ (-122.341133,37.769535)
+(1 row)
+
+ pg_ais_get_int_field 
+-----------------------
+        366053209
+(1 row)
+
+ pg_ais_get_int_field 
+-----------------------
+        366053209
+(1 row)
+
+ pg_ais_get_int_field 
+-----------------------
+                511
+(1 row)
+
+ pg_ais_get_int_field 
+-----------------------
+                  0
+(1 row)
+
+ pg_ais_get_int_field 
+-----------------------
+ 
+(1 row)
+
+ pg_ais_get_float_field 
+-------------------------
+                     0
+(1 row)
+
+ pg_ais_get_float_field 
+-------------------------
+                 360.0
+(1 row)
+
+ pg_ais_get_float_field 
+-------------------------
+ 
+(1 row)
+
+ pg_ais_get_bool_field 
+------------------------
+ f
+(1 row)
+
+ pg_ais_get_bool_field 
+------------------------
+ t
+(1 row)
+
+ pg_ais_get_bool_field 
+------------------------
+ 
+(1 row)

@@ -36,19 +36,37 @@ double parse_lon(const char *payload, int start) {
 }
 
 double parse_speed(const char *payload, int start) {
-    return parse_uint(payload, start, 10) / 10.0;
+    uint32_t raw = parse_uint(payload, start, 10);
+    if (raw == 1023) return -1.0;
+    return raw / 10.0;
 }
 
 double parse_heading(const char *payload, int start) {
-    return parse_uint(payload, start, 9);
+    uint32_t raw = parse_uint(payload, start, 9);
+    if (raw == 511) return -1.0;
+    return raw;
 }
 
 char *parse_string(const char *payload, int start, int len) {
     int byte_len = (len + 5) / 6;
     char *out = malloc(byte_len + 1);
+    if (!out) return NULL;
+
     for (int i = 0; i < byte_len; i++) {
-        out[i] = sixbit_to_uint(payload[i + start / 6]) + 48;
+        int sixbit = parse_uint(payload, start + i * 6, 6);
+        char decoded = (sixbit == 0) ? ' ' : sixbit_ascii[sixbit & 0x3F];
+        out[i] = decoded;
     }
     out[byte_len] = '\0';
+
+    // Trim trailing spaces
+    for (int i = byte_len - 1; i >= 0; i--) {
+        if (out[i] == ' ') {
+            out[i] = '\0';
+        } else {
+            break;
+        }
+    }
+
     return out;
 }
