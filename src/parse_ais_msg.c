@@ -180,11 +180,15 @@ bool parse_msg_12(AISMessage *msg, const char *payload) {
 
 bool parse_msg_13(AISMessage *msg, const char *payload) {
     msg->type = 13;
+    msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
+    msg->spare = parse_uint(payload, 38, 2);
+
     int text_start = 40;
     int bit_len = (int)(strlen(payload) * 6) - text_start;
     msg->bin_len = bit_len / 6;
-    msg->bin_data = parse_string(payload, text_start, bit_len);  // Reuse for 6-bit ASCII
+    msg->bin_data = parse_string(payload, text_start, bit_len);  // 6-bit ASCII broadcast safety message
+
     return true;
 }
 
