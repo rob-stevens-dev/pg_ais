@@ -247,7 +247,10 @@ bool parse_msg_16(AISMessage *msg, const char *payload) {
 
 bool parse_msg_17(AISMessage *msg, const char *payload) {
     msg->type = 17;
+    msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
+    msg->spare = parse_uint(payload, 38, 1);
+
     int bin_start = 40;
     int bin_len = (int)(strlen(payload) * 6) - bin_start;
     int bin_bytes = bin_len / 8;
