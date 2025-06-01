@@ -277,6 +277,10 @@ static void test_msg_20_parsing(void **state) {
     assert_true(ok);
     assert_int_equal(msg.type, 20);
     assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
+    assert_true(msg.offset1 >= 0 && msg.offset1 <= 2240);
+    assert_true(msg.num_slots1 > 0 && msg.num_slots1 <= 15);
+    assert_true(msg.timeout1 >= 0);
+    assert_true(msg.increment1 > 0);
     free_ais_message(&msg);
 }
 
