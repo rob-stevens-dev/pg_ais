@@ -51,6 +51,18 @@ bool parse_msg_5(AISMessage *msg, const char *payload) {
     msg->imo = parse_uint(payload, 40, 30);
     msg->callsign = parse_string(payload, 70, 42);
     msg->vessel_name = parse_string(payload, 112, 120);
+    msg->ship_type = parse_uint(payload, 232, 8);
+    msg->dimension_to_bow = parse_uint(payload, 240, 9);
+    msg->dimension_to_stern = parse_uint(payload, 249, 9);
+    msg->dimension_to_port = parse_uint(payload, 258, 6);
+    msg->dimension_to_starboard = parse_uint(payload, 264, 6);
+    msg->fix_type = parse_uint(payload, 270, 4);
+    msg->eta_month = parse_uint(payload, 274, 4);
+    msg->eta_day = parse_uint(payload, 278, 5);
+    msg->eta_hour = parse_uint(payload, 283, 5);
+    msg->eta_minute = parse_uint(payload, 288, 6);
+    msg->draught = parse_uint(payload, 294, 8) / 10.0;
+    msg->destination = parse_string(payload, 302, 120);
     return true;
 }
 
