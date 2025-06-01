@@ -506,9 +506,23 @@ bool parse_msg_26(AISMessage *msg, const char *payload) {
 
 bool parse_msg_27(AISMessage *msg, const char *payload) {
     msg->type = 27;
+    msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
-    msg->lat = parse_lat(payload, 85);
-    msg->lon = parse_lon(payload, 61);
+    msg->accuracy = parse_uint(payload, 38, 1);
+    msg->raim = parse_uint(payload, 39, 1);
+    msg->status = parse_uint(payload, 40, 4);
+    msg->lon = parse_lon(payload, 44);
+    msg->lat = parse_lat(payload, 62);
+    msg->speed = parse_speed(payload, 79);
+    msg->course = parse_uint(payload, 85, 9) / 10.0;
+    msg->gnss = parse_uint(payload, 94, 1);
+
+    // Validation
+    if (msg->lat < -90 || msg->lat > 90) msg->lat = 91.0;
+    if (msg->lon < -180 || msg->lon > 180) msg->lon = 181.0;
+    if (msg->speed > 102.2) msg->speed = -1;
+    if (msg->course >= 360.0) msg->course = -1;
+
     return true;
 }
 
