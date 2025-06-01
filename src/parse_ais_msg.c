@@ -383,8 +383,30 @@ bool parse_msg_21(AISMessage *msg, const char *payload) {
 
 bool parse_msg_22(AISMessage *msg, const char *payload) {
     msg->type = 22;
+    msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
-    msg->app_id = parse_uint(payload, 40, 22);  // start slot or channel info placeholder
+    msg->channel_a = parse_uint(payload, 40, 12);
+    msg->channel_b = parse_uint(payload, 52, 12);
+    msg->txrx_mode = parse_uint(payload, 64, 4);
+    msg->power = parse_uint(payload, 68, 1);
+    msg->ne_lon = parse_lon(payload, 69);
+    msg->ne_lat = parse_lat(payload, 87);
+    msg->sw_lon = parse_lon(payload, 105);
+    msg->sw_lat = parse_lat(payload, 123);
+    msg->addressed = parse_uint(payload, 141, 1);
+    msg->bandwidth_a = parse_uint(payload, 142, 1);
+    msg->bandwidth_b = parse_uint(payload, 143, 1);
+    msg->zone_size = parse_uint(payload, 144, 3);
+    msg->spare = parse_uint(payload, 147, 1);
+
+    // Validation
+    if (msg->channel_a == 0 || msg->channel_b == 0) return false;
+    if (msg->txrx_mode > 15) return false;
+    if (msg->ne_lat < -90 || msg->ne_lat > 90) msg->ne_lat = 91.0;
+    if (msg->ne_lon < -180 || msg->ne_lon > 180) msg->ne_lon = 181.0;
+    if (msg->sw_lat < -90 || msg->sw_lat > 90) msg->sw_lat = 91.0;
+    if (msg->sw_lon < -180 || msg->sw_lon > 180) msg->sw_lon = 181.0;
+
     return true;
 }
 
