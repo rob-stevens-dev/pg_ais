@@ -1,5 +1,3 @@
-// pg_ais.h
-
 #ifndef PG_AIS_H
 #define PG_AIS_H
 
@@ -51,10 +49,19 @@ typedef struct {
     float lon;
     float speed;
     float heading;
+    uint32_t imo;
+    char *callsign;
+    char *vessel_name;
 } AISMessage;
+
 
 // C-string converters
 char *ais_to_cstring(const ais *value);
 ais *ais_from_cstring_external(const char *str);
 
-#endif /* PG_AIS_H */
+PGDLLEXPORT Datum pg_ais_debug(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum pg_ais_fields(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum pg_ais_point(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum pg_ais_point_geom(PG_FUNCTION_ARGS);
+
+#endif

@@ -1,4 +1,3 @@
-// --- parse_ais.h ---
 #ifndef PARSE_AIS_H
 #define PARSE_AIS_H
 
@@ -13,4 +12,4 @@ bool try_reassemble(AISFragmentBuffer *buffer, AISMessage *msg_out);
 void reset_buffer(AISFragmentBuffer *buffer);
 void free_buffer(AISFragmentBuffer *buffer);
 
-#endif // PARSE_AIS_H
+#endif
