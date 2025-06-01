@@ -277,6 +277,29 @@ pg_ais_point_geom(PG_FUNCTION_ARGS) {
 }
 
 
+PG_FUNCTION_INFO_V1(pg_ais_get_text_field);
+Datum
+pg_ais_get_text_field(PG_FUNCTION_ARGS)
+{
+    bytea *raw = PG_GETARG_BYTEA_P(0);
+    text *fieldname = PG_GETARG_TEXT_P(1);
+    AISMessage msg;
+    char *cstr = text_to_cstring(fieldname);
+
+    if (!parse_ais_message(raw, &msg)) {
+        PG_RETURN_NULL();
+    }
+
+    if (strcmp(cstr, "shipname") == 0 && msg.shipname) {
+        PG_RETURN_TEXT_P(cstring_to_text(msg.shipname));
+    } else if (strcmp(cstr, "callsign") == 0 && msg.callsign) {
+        PG_RETURN_TEXT_P(cstring_to_text(msg.callsign));
+    }
+
+    PG_RETURN_NULL();
+}
+
+
 /* Internal utility functions. */
 void free_ais_message(AISMessage *msg) {
     if (msg->callsign) {

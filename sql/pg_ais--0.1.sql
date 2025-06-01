@@ -66,3 +66,8 @@ CREATE OR REPLACE FUNCTION pg_ais_point(text)
 RETURNS bytea
 AS 'MODULE_PATHNAME', 'pg_ais_point_geom'
 LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION pg_ais_get_text_field(sentence ais, fieldname text)
+RETURNS text
+AS 'MODULE_PATHNAME', 'pg_ais_get_text_field'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
