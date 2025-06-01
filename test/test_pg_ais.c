@@ -370,7 +370,6 @@ static void test_msg_26_parsing(void **state) {
     free_ais_message(&msg);
 }
 
-
 static void test_msg_27_parsing(void **state) {
     AISMessage msg;
     const char *payload = "K5Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual payload for msg 27
@@ -378,6 +377,10 @@ static void test_msg_27_parsing(void **state) {
     assert_true(ok);
     assert_int_equal(msg.type, 27);
     assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
+    assert_true(msg.lat != 91.0);
+    assert_true(msg.lon != 181.0);
+    assert_true(msg.speed >= 0);
+    assert_true(msg.course >= 0);
     free_ais_message(&msg);
 }
 
