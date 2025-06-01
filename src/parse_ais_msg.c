@@ -439,16 +439,34 @@ bool parse_msg_23(AISMessage *msg, const char *payload) {
 
 bool parse_msg_25(AISMessage *msg, const char *payload) {
     msg->type = 25;
+    msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
-    int bin_start = 40;
-    int bin_len = (int)(strlen(payload) * 6) - bin_start;
+    msg->addressed = parse_uint(payload, 38, 1);
+    msg->structured = parse_uint(payload, 39, 1);
+
+    int app_id_start = 40;
+    if (msg->addressed) {
+        msg->dest_mmsi = parse_uint(payload, 40, 30);
+        app_id_start += 30;
+    }
+    if (msg->structured) {
+        msg->app_id = parse_uint(payload, app_id_start, 16);
+        app_id_start += 16;
+    }
+
+    int bin_len = (int)(strlen(payload) * 6) - app_id_start;
     int bin_bytes = bin_len / 8;
     msg->bin_len = bin_bytes;
     msg->bin_data = malloc(bin_bytes);
     if (!msg->bin_data) return false;
     for (int i = 0; i < bin_bytes; i++) {
-        msg->bin_data[i] = (char)parse_uint(payload, bin_start + i * 8, 8);
+        msg->bin_data[i] = (char)parse_uint(payload, app_id_start + i * 8, 8);
     }
+
+    // Validation
+    if (msg->bin_len == 0 || msg->bin_data == NULL) return false;
+    if (msg->structured && msg->app_id == 0) return false;
+
     return true;
 }
 
