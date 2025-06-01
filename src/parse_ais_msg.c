@@ -229,10 +229,19 @@ bool parse_msg_15(AISMessage *msg, const char *payload) {
 
 bool parse_msg_16(AISMessage *msg, const char *payload) {
     msg->type = 16;
+    msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
     msg->dest_mmsi = parse_uint(payload, 40, 30);
-    msg->app_id = parse_uint(payload, 70, 12);  // offset1 (12 bits)
-    // Additional destination/offset sets not implemented here
+    msg->msg1_offset = parse_uint(payload, 70, 12);
+
+    if ((int)(strlen(payload) * 6) > 82) {
+        msg->dest2_mmsi = parse_uint(payload, 82, 30);
+        msg->msg2_offset = parse_uint(payload, 112, 12);
+    } else {
+        msg->dest2_mmsi = 0;
+        msg->msg2_offset = 0;
+    }
+
     return true;
 }
 
