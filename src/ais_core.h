@@ -42,6 +42,19 @@ typedef struct {
     uint8_t minute;
     uint8_t second;
     uint8_t fix_type;
+
+    // Static and Voyage (Message 5)
+    uint8_t ship_type;
+    uint16_t dimension_to_bow;
+    uint16_t dimension_to_stern;
+    uint8_t dimension_to_port;
+    uint8_t dimension_to_starboard;
+    uint8_t eta_month;
+    uint8_t eta_day;
+    uint8_t eta_hour;
+    uint8_t eta_minute;
+    float draught;
+    char *destination;
 } AISMessage;
 
 bool parse_ais_sentence(const char *sentence, AISMessage *msg);
