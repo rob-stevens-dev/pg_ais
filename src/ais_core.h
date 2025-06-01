@@ -13,17 +13,26 @@ typedef struct {
     float lon;
     float speed;
     float heading;
+
+    // Identification
     uint32_t imo;
     char *callsign;
     char *vessel_name;
+
+    // Messaging and addressing
     uint32_t seq_num;
     uint32_t dest_mmsi;
     uint32_t retransmit;
     uint32_t app_id;
+    uint8_t dac;
+    uint8_t fid;
+    uint8_t spare;
+
+    // Binary payload
     char *bin_data;
     uint32_t bin_len;
 
-    // Common fields
+    // Navigation status
     uint8_t repeat;
     uint8_t nav_status;
     int8_t rot;
@@ -43,7 +52,7 @@ typedef struct {
     uint8_t second;
     uint8_t fix_type;
 
-    // Static and Voyage (Message 5)
+    // Static and voyage related (Message 5)
     uint8_t ship_type;
     uint16_t dimension_to_bow;
     uint16_t dimension_to_stern;
@@ -56,6 +65,7 @@ typedef struct {
     float draught;
     char *destination;
 } AISMessage;
+
 
 bool parse_ais_sentence(const char *sentence, AISMessage *msg);
 void free_ais_message(AISMessage *msg);
