@@ -66,7 +66,6 @@ bool parse_msg_4_11(AISMessage *msg, const char *payload) {
     return true;
 }
 
-
 bool parse_msg_5(AISMessage *msg, const char *payload) {
     msg->type = 5;
     msg->mmsi = parse_uint(payload, 8, 30);
@@ -85,8 +84,20 @@ bool parse_msg_5(AISMessage *msg, const char *payload) {
     msg->eta_minute = parse_uint(payload, 288, 6);
     msg->draught = parse_uint(payload, 294, 8) / 10.0;
     msg->destination = parse_string(payload, 302, 120);
+
+    // Validation
+    if (msg->eta_month < 1 || msg->eta_month > 12) return false;
+    if (msg->eta_day < 1 || msg->eta_day > 31) return false;
+    if (msg->eta_hour > 23) return false;
+    if (msg->eta_minute > 59) return false;
+    if (!msg->vessel_name || strlen(msg->vessel_name) == 0) return false;
+    if (!msg->destination || strlen(msg->destination) == 0) return false;
+    if (!msg->callsign || strlen(msg->callsign) == 0) return false;
+    if (msg->draught > 25.5) return false;
+
     return true;
 }
+
 
 bool parse_msg_6(AISMessage *msg, const char *payload) {
     msg->type = 6;
