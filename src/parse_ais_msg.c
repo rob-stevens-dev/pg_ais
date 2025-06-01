@@ -314,9 +314,37 @@ bool parse_msg_18_19_24(AISMessage *msg, const char *payload) {
 
 bool parse_msg_20(AISMessage *msg, const char *payload) {
     msg->type = 20;
+    msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
-    msg->app_id = parse_uint(payload, 40, 12);  // offset1 (12 bits, example placeholder)
-    // Slot assignments can be parsed here if needed
+
+    msg->offset1 = parse_uint(payload, 40, 12);
+    msg->num_slots1 = parse_uint(payload, 52, 4);
+    msg->timeout1 = parse_uint(payload, 56, 3);
+    msg->increment1 = parse_uint(payload, 59, 11);
+
+    if ((int)(strlen(payload) * 6) > 70) {
+        msg->offset2 = parse_uint(payload, 70, 12);
+        msg->num_slots2 = parse_uint(payload, 82, 4);
+        msg->timeout2 = parse_uint(payload, 86, 3);
+        msg->increment2 = parse_uint(payload, 89, 11);
+    }
+    if ((int)(strlen(payload) * 6) > 100) {
+        msg->offset3 = parse_uint(payload, 100, 12);
+        msg->num_slots3 = parse_uint(payload, 112, 4);
+        msg->timeout3 = parse_uint(payload, 116, 3);
+        msg->increment3 = parse_uint(payload, 119, 11);
+    }
+    if ((int)(strlen(payload) * 6) > 130) {
+        msg->offset4 = parse_uint(payload, 130, 12);
+        msg->num_slots4 = parse_uint(payload, 142, 4);
+        msg->timeout4 = parse_uint(payload, 146, 3);
+        msg->increment4 = parse_uint(payload, 149, 11);
+    }
+
+    // Validation
+    if (msg->num_slots1 == 0 || msg->increment1 == 0 || msg->offset1 > 2240 || msg->num_slots1 > 15)
+        return false;
+
     return true;
 }
 
