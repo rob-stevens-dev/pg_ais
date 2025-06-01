@@ -298,6 +298,32 @@ pg_ais_get_text_field(PG_FUNCTION_ARGS)
 }
 
 
+PG_FUNCTION_INFO_V1(pg_ais_get_int_field);
+Datum
+pg_ais_get_int_field(PG_FUNCTION_ARGS) {
+    bytea *raw = PG_GETARG_BYTEA_P(0);
+    text *fieldname = PG_GETARG_TEXT_P(1);
+    char *cstr = text_to_cstring(fieldname);
+    AISMessage msg;
+
+    if (!parse_ais_message(raw, &msg)) {
+        PG_RETURN_NULL();
+    }
+
+    if (strcmp(cstr, "mmsi") == 0 && msg.mmsi > 0) {
+        PG_RETURN_INT32(msg.mmsi);
+    } else if (strcmp(cstr, "heading") == 0 && msg.heading >= 0 && msg.heading <= 359) {
+        PG_RETURN_INT32(msg.heading);
+    } else if (strcmp(cstr, "nav_status") == 0 && msg.nav_status >= 0 && msg.nav_status <= 15) {
+        PG_RETURN_INT32(msg.nav_status);
+    } else if (strcmp(cstr, "course") == 0 && msg.course >= 0 && msg.course <= 360) {
+        PG_RETURN_INT32((int)(msg.course));
+    }
+
+    PG_RETURN_NULL();
+}
+
+
 /* Internal utility functions. */
 void free_ais_message(AISMessage *msg) {
     if (msg->callsign) {
