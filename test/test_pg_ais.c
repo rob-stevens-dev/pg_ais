@@ -98,12 +98,16 @@ static void test_msg_6_parsing(void **state) {
 
 static void test_msg_7_parsing(void **state) {
     AISMessage msg;
-    const char *payload = "75Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual payload for type 7
+    const char *payload = "75Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual payload for msg 7
     bool ok = parse_ais_payload(&msg, payload, 0);
     assert_true(ok);
     assert_int_equal(msg.type, 7);
     assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
-    // Optionally assert app_id, dest_mmsi, bin_len, etc.
+    assert_true(msg.seq_num >= 0);
+    assert_true(msg.dac > 0);
+    assert_true(msg.fid > 0);
+    assert_int_equal(msg.spare, msg.spare);
+    assert_true(msg.bin_len > 0);
     free_ais_message(&msg);
 }
 
