@@ -3,6 +3,9 @@
 #include <stdarg.h>   // for va_list
 #include <setjmp.h>   // for jmp_buf
 #include <cmocka.h>
+
+#include "utils/geo_decls.h"
+#include "utils/builtins.h"
 #include "../src/pg_ais.h"
 #include "../src/parse_ais.h"
 #include "../src/parse_ais_msg.h"
@@ -496,6 +499,27 @@ static void test_incomplete_reassembly(void **state) {
     reset_buffer(&buffer);
 }
 
+
+static void test_pg_ais_point_valid(void **state) {
+    const char *nmea = "!AIVDM,1,1,,B,13aG?P0P00PD;88MD5MTDww@2D0T,0*1C";
+    bytea *raw = cstring_to_text_with_len(nmea, strlen(nmea));
+
+    Datum result = DirectFunctionCall1(pg_ais_point, PointerGetDatum(raw));
+    POINT *pt = DatumGetPointP(result);
+    assert_true(pt->x > -180 && pt->x < 180);
+    assert_true(pt->y > -90 && pt->y < 90);
+}
+
+
+static void test_pg_ais_point_invalid(void **state) {
+    const char *bad_nmea = "!AIVDM,1,1,,B,INVALID,0*00";
+    bytea *raw = cstring_to_text_with_len(bad_nmea, strlen(bad_nmea));
+
+    Datum result = DirectFunctionCall1(pg_ais_point, PointerGetDatum(raw));
+    assert_true(DatumGetPointer(result) == NULL);
+}
+
+
 int main(void) {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_valid_fragment_parsing),
@@ -528,6 +552,8 @@ int main(void) {
         cmocka_unit_test(test_msg_27_parsing),
         cmocka_unit_test(test_pg_ais_get_text_field_shipname),
         cmocka_unit_test(test_pg_ais_get_text_field_unsupported),
+        cmocka_unit_test(test_pg_ais_point_valid),
+        cmocka_unit_test(test_pg_ais_point_invalid),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }

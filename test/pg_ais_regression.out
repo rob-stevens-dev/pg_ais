@@ -37,3 +37,8 @@ CREATE TABLE test_ais (id serial, sentence ais);
 ----------------
  
 (1 row)
+
+     pg_ais_point     
+-----------------------
+ (-122.341133,37.769535)
+(1 row)

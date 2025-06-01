@@ -33,3 +33,12 @@ SELECT id, pg_ais_get_text_field(sentence, 'shipname') AS shipname FROM test_tex
 
 -- Validate access to an unsupported field (expect NULL)
 SELECT pg_ais_get_text_field(sentence, 'foobar') AS should_be_null FROM test_text_field;
+
+
+-- Test Lat/Lon extraction to point
+-- Insert a positional message (type 1) with valid lat/lon
+INSERT INTO test_text_field(sentence) VALUES
+('!AIVDM,1,1,,B,13aG?P0P00PD;88MD5MTDww@2D0T,0*1C');
+
+-- Validate point extraction
+SELECT pg_ais_point(sentence) FROM test_text_field;

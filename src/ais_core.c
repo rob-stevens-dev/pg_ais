@@ -222,15 +222,13 @@ pg_ais_fields(PG_FUNCTION_ARGS) {
 PG_FUNCTION_INFO_V1(pg_ais_point);
 Datum
 pg_ais_point(PG_FUNCTION_ARGS) {
-    text *txt = PG_GETARG_TEXT_PP(0);
-    char *input = text_to_cstring(txt);
-
+    bytea *raw = PG_GETARG_BYTEA_P(0);
     AISMessage msg;
-    if (!parse_ais_from_text(input, &msg)) {
-        ereport(ERROR, (errmsg("invalid AIS message")));
+
+    if (!parse_ais_message(raw, &msg)) {
+        PG_RETURN_NULL();
     }
 
-    // Validate lat/lon range
     if (msg.lat < -90 || msg.lat > 90 || msg.lon < -180 || msg.lon > 180) {
         free_ais_message(&msg);
         PG_RETURN_NULL();
