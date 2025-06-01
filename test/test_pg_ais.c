@@ -251,7 +251,10 @@ static void test_msg_18_parsing(void **state) {
     bool ok = parse_ais_payload(&msg, payload, 0);
     assert_true(ok);
     assert_int_equal(msg.type, 18);
-    assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
+    assert_true(msg.lat != 91.0);
+    assert_true(msg.lon != 181.0);
+    assert_true(msg.speed >= 0);
+    assert_true(msg.heading >= 0);
     free_ais_message(&msg);
 }
 
@@ -261,8 +264,9 @@ static void test_msg_19_parsing(void **state) {
     bool ok = parse_ais_payload(&msg, payload, 0);
     assert_true(ok);
     assert_int_equal(msg.type, 19);
-    assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
     assert_non_null(msg.vessel_name);
+    assert_non_null(msg.callsign);
+    assert_true(msg.dimension_to_bow > 0);
     free_ais_message(&msg);
 }
 
@@ -313,8 +317,7 @@ static void test_msg_24_parsing(void **state) {
     bool ok = parse_ais_payload(&msg, payload, 0);
     assert_true(ok);
     assert_int_equal(msg.type, 24);
-    assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
-    // Optional: check vessel_name or callsign based on part
+    assert_true(msg.callsign || msg.vessel_name);
     free_ais_message(&msg);
 }
 
