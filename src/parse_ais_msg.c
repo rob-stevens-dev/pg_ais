@@ -208,10 +208,22 @@ bool parse_msg_14(AISMessage *msg, const char *payload) {
 
 bool parse_msg_15(AISMessage *msg, const char *payload) {
     msg->type = 15;
+    msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
     msg->dest_mmsi = parse_uint(payload, 40, 30);
-    msg->app_id = parse_uint(payload, 70, 10);  // first interrogation's message ID (6) + offset (4)
-    // Additional interrogations (if present) not handled here
+    msg->msg1_id = parse_uint(payload, 70, 6);
+    msg->msg1_offset = parse_uint(payload, 76, 12);
+
+    if ((int)(strlen(payload) * 6) > 88) {
+        msg->dest2_mmsi = parse_uint(payload, 88, 30);
+        msg->msg2_id = parse_uint(payload, 118, 6);
+        msg->msg2_offset = parse_uint(payload, 124, 12);
+    } else {
+        msg->dest2_mmsi = 0;
+        msg->msg2_id = 0;
+        msg->msg2_offset = 0;
+    }
+
     return true;
 }
 
