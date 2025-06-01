@@ -305,7 +305,6 @@ bool parse_msg_15(AISMessage *msg, const char *payload) {
     return true;
 }
 
-
 bool parse_msg_16(AISMessage *msg, const char *payload) {
     msg->type = 16;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -321,8 +320,15 @@ bool parse_msg_16(AISMessage *msg, const char *payload) {
         msg->msg2_offset = 0;
     }
 
+    // Validation
+    if (msg->dest_mmsi == 0 || msg->dest_mmsi > 999999999) return false;
+    if (msg->msg1_offset > 2240) return false;
+    if (msg->dest2_mmsi && (msg->dest2_mmsi > 999999999)) return false;
+    if (msg->msg2_offset > 2240) return false;
+
     return true;
 }
+
 
 bool parse_msg_17(AISMessage *msg, const char *payload) {
     msg->type = 17;
