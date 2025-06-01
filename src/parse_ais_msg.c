@@ -68,8 +68,8 @@ bool parse_msg_5(AISMessage *msg, const char *payload) {
     msg->type = 5;
     msg->mmsi = parse_uint(payload, 8, 30);
     msg->imo = parse_uint(payload, 40, 30);
-    msg->callsign = parse_string(payload, 70, 42);
-    msg->vessel_name = parse_string(payload, 112, 120);
+    msg->callsign = parse_string_utf8(payload, 70, 42);
+    msg->vessel_name = parse_string_utf8(payload, 112, 120);
     msg->ship_type = parse_uint(payload, 232, 8);
     msg->dimension_to_bow = parse_uint(payload, 240, 9);
     msg->dimension_to_stern = parse_uint(payload, 249, 9);
@@ -81,7 +81,7 @@ bool parse_msg_5(AISMessage *msg, const char *payload) {
     msg->eta_hour = parse_uint(payload, 283, 5);
     msg->eta_minute = parse_uint(payload, 288, 6);
     msg->draught = parse_uint(payload, 294, 8) / 10.0;
-    msg->destination = parse_string(payload, 302, 120);
+    msg->destination = parse_string_utf8(payload, 302, 120);
 
     // Validation
     if (msg->eta_month < 1 || msg->eta_month > 12) return false;
@@ -233,7 +233,7 @@ bool parse_msg_12(AISMessage *msg, const char *payload) {
     int text_start = 72;
     int bit_len = (int)(strlen(payload) * 6) - text_start;
     msg->bin_len = bit_len / 6;
-    msg->bin_data = parse_string(payload, text_start, bit_len);  // 6-bit ASCII safety text
+    msg->bin_data = parse_string_utf8(payload, text_start, bit_len);  // 6-bit ASCII safety text
 
     // Validation
     if (msg->dest_mmsi == 0 || msg->dest_mmsi > 999999999) return false;
@@ -251,7 +251,7 @@ bool parse_msg_13(AISMessage *msg, const char *payload) {
     int text_start = 40;
     int bit_len = (int)(strlen(payload) * 6) - text_start;
     msg->bin_len = bit_len / 6;
-    msg->bin_data = parse_string(payload, text_start, bit_len);  // 6-bit ASCII broadcast safety message
+    msg->bin_data = parse_string_utf8(payload, text_start, bit_len);  // 6-bit ASCII broadcast safety message
 
     // Validation
     if (!msg->bin_data || strlen(msg->bin_data) == 0) return false;
@@ -268,7 +268,7 @@ bool parse_msg_14(AISMessage *msg, const char *payload) {
     int text_start = 40;
     int bit_len = (int)(strlen(payload) * 6) - text_start;
     msg->bin_len = bit_len / 6;
-    msg->bin_data = parse_string(payload, text_start, bit_len);  // 6-bit ASCII safety-related text
+    msg->bin_data = parse_string_utf8(payload, text_start, bit_len);  // 6-bit ASCII safety-related text
 
     // Validation
     if (!msg->bin_data || strlen(msg->bin_data) == 0) return false;
@@ -373,8 +373,8 @@ bool parse_msg_18_19_24(AISMessage *msg, const char *payload) {
 
     if (msg->type == 19) {
         msg->ship_type = parse_uint(payload, 143, 8);
-        msg->callsign = parse_string(payload, 151, 42);
-        msg->vessel_name = parse_string(payload, 193, 120);
+        msg->callsign = parse_string_utf8(payload, 151, 42);
+        msg->vessel_name = parse_string_utf8(payload, 193, 120);
         msg->dimension_to_bow = parse_uint(payload, 313, 9);
         msg->dimension_to_stern = parse_uint(payload, 322, 9);
         msg->dimension_to_port = parse_uint(payload, 331, 6);
@@ -383,9 +383,9 @@ bool parse_msg_18_19_24(AISMessage *msg, const char *payload) {
     } else if (msg->type == 24) {
         int part = parse_uint(payload, 38, 2);
         if (part == 0) {
-            msg->vessel_name = parse_string(payload, 40, 120);
+            msg->vessel_name = parse_string_utf8(payload, 40, 120);
         } else if (part == 1) {
-            msg->callsign = parse_string(payload, 40, 42);
+            msg->callsign = parse_string_utf8(payload, 40, 42);
             msg->ship_type = parse_uint(payload, 82, 8);
             msg->dimension_to_bow = parse_uint(payload, 90, 9);
             msg->dimension_to_stern = parse_uint(payload, 99, 9);
@@ -439,7 +439,7 @@ bool parse_msg_21(AISMessage *msg, const char *payload) {
     msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
     msg->aid_type = parse_uint(payload, 38, 5);
-    msg->vessel_name = parse_string(payload, 43, 120);
+    msg->vessel_name = parse_string_utf8(payload, 43, 120);
     msg->accuracy = parse_uint(payload, 163, 1);
     msg->lon = parse_lon(payload, 164);
     msg->lat = parse_lat(payload, 192);

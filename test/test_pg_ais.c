@@ -580,6 +580,24 @@ static void test_pg_ais_get_bool_field_unsupported(void **state) {
 }
 
 
+static void test_parse_string_utf8_basic(void **state) {
+    // This payload represents "TEST " using 6-bit ASCII (in packed form):
+    const char *payload = "55NB5D0";  // Simulated base64-like packed ASCII chars
+    char *decoded = parse_string_utf8(payload, 0, 30);  // 5 chars * 6 bits = 30
+    assert_string_equal(decoded, "TEST");
+    free(decoded);
+}
+
+
+static void test_parse_string_utf8_trailing_spaces(void **state) {
+    // This simulates "TEST  " (with trailing @/spaces)
+    const char *payload = "55NB5D000";  // 7 chars = 42 bits
+    char *decoded = parse_string_utf8(payload, 0, 42);
+    assert_string_equal(decoded, "TEST");
+    free(decoded);
+}
+
+
 int main(void) {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_valid_fragment_parsing),
@@ -620,6 +638,8 @@ int main(void) {
         cmocka_unit_test(test_pg_ais_get_float_field_unsupported),
         cmocka_unit_test(test_pg_ais_get_bool_field_raim),
         cmocka_unit_test(test_pg_ais_get_bool_field_unsupported),
+        cmocka_unit_test(test_parse_string_utf8_basic),
+        cmocka_unit_test(test_parse_string_utf8_trailing_spaces),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }
