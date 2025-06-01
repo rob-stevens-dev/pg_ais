@@ -87,17 +87,20 @@ bool parse_msg_6(AISMessage *msg, const char *payload) {
 
 bool parse_msg_7(AISMessage *msg, const char *payload) {
     msg->type = 7;
+    msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
     msg->seq_num = parse_uint(payload, 38, 2);
     msg->dest_mmsi = parse_uint(payload, 40, 30);
     msg->retransmit = parse_uint(payload, 70, 1);
-    msg->app_id = parse_uint(payload, 72, 16);
+    msg->spare = parse_uint(payload, 71, 1);
+    msg->dac = parse_uint(payload, 72, 10);
+    msg->fid = parse_uint(payload, 82, 6);
     int bin_start = 88;
     int bin_len = (int)(strlen(payload) * 6) - bin_start;
     int bin_bytes = bin_len / 8;
     msg->bin_len = bin_bytes;
     msg->bin_data = malloc(bin_bytes);
-    if (msg->bin_data == NULL) return false;
+    if (!msg->bin_data) return false;
     for (int i = 0; i < bin_bytes; i++) {
         msg->bin_data[i] = (char)parse_uint(payload, bin_start + i * 8, 8);
     }
