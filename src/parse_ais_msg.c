@@ -32,33 +32,40 @@ bool parse_msg_1_2_3(AISMessage *msg, const char *payload) {
     return true;
 }
 
-bool parse_msg_1_2_3(AISMessage *msg, const char *payload) {
+bool parse_msg_4_11(AISMessage *msg, const char *payload) {
     msg->type = parse_uint(payload, 0, 6);
     msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
-    msg->nav_status = parse_uint(payload, 38, 4);
-    msg->rot = parse_uint(payload, 42, 8);  // Rate of turn (special handling may apply)
-    msg->speed = parse_speed(payload, 50);
-    msg->accuracy = parse_uint(payload, 60, 1);
-    msg->lon = parse_lon(payload, 61);
-    msg->lat = parse_lat(payload, 89);
-    msg->course = parse_uint(payload, 116, 12) / 10.0;
-    msg->heading = parse_heading(payload, 128);
+
+    msg->year = parse_uint(payload, 38, 14);
+    msg->month = parse_uint(payload, 52, 4);
+    msg->day = parse_uint(payload, 56, 5);
+    msg->hour = parse_uint(payload, 61, 5);
+    msg->minute = parse_uint(payload, 66, 6);
+    msg->second = parse_uint(payload, 72, 6);
+    msg->accuracy = parse_uint(payload, 78, 1);
+    msg->lon = parse_lon(payload, 79);
+    msg->lat = parse_lat(payload, 107);
     msg->timestamp = parse_uint(payload, 137, 6);
     msg->maneuver = parse_uint(payload, 143, 2);
-    msg->raim = parse_uint(payload, 148, 1);
-    msg->radio = parse_uint(payload, 149, 19);
+    msg->fix_type = parse_uint(payload, 143, 4);
+    msg->raim = parse_uint(payload, 147, 1);
+    msg->radio = parse_uint(payload, 148, 19);
 
     // Validation
     if (msg->lat < -90 || msg->lat > 90) msg->lat = 91.0;
     if (msg->lon < -180 || msg->lon > 180) msg->lon = 181.0;
-    if (msg->speed > 102.2) msg->speed = -1;
-    if (msg->course >= 360.0) msg->course = -1;
-    if (msg->heading >= 511) msg->heading = -1;
     if (msg->timestamp == 60) msg->timestamp = 255;
+    if (msg->fix_type == 0) msg->fix_type = 255;
+    if (msg->month == 0 || msg->month > 12) return false;
+    if (msg->day == 0 || msg->day > 31) return false;
+    if (msg->hour > 23) return false;
+    if (msg->minute > 59) return false;
+    if (msg->second > 59) return false;
 
     return true;
 }
+
 
 bool parse_msg_5(AISMessage *msg, const char *payload) {
     msg->type = 5;
