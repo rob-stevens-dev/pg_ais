@@ -207,7 +207,13 @@ static void test_msg_15_parsing(void **state) {
     assert_true(ok);
     assert_int_equal(msg.type, 15);
     assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
-    assert_int_equal(msg.dest_mmsi, 987654321);  // Replace with expected destination MMSI
+    assert_int_equal(msg.dest_mmsi, 987654321);  // Replace with expected MMSI
+    assert_true(msg.msg1_id > 0);
+    assert_true(msg.msg1_offset >= 0);
+    if (msg.dest2_mmsi > 0) {
+        assert_true(msg.msg2_id > 0);
+        assert_true(msg.msg2_offset >= 0);
+    }
     free_ais_message(&msg);
 }
 
