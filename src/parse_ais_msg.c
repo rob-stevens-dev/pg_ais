@@ -23,11 +23,25 @@ bool parse_msg_1_2_3(AISMessage *msg, const char *payload) {
     return true;
 }
 
-bool parse_msg_4(AISMessage *msg, const char *payload) {
-    msg->type = 4;
+bool parse_msg_4_11(AISMessage *msg, const char *payload) {
+    msg->type = parse_uint(payload, 0, 6);
+    msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
-    msg->lat = parse_lat(payload, 89);
-    msg->lon = parse_lon(payload, 61);
+
+    msg->year = parse_uint(payload, 38, 14);
+    msg->month = parse_uint(payload, 52, 4);
+    msg->day = parse_uint(payload, 56, 5);
+    msg->hour = parse_uint(payload, 61, 5);
+    msg->minute = parse_uint(payload, 66, 6);
+    msg->second = parse_uint(payload, 72, 6);
+    msg->accuracy = parse_uint(payload, 78, 1);
+    msg->lon = parse_lon(payload, 79);
+    msg->lat = parse_lat(payload, 107);
+    msg->timestamp = parse_uint(payload, 137, 6);
+    msg->maneuver = parse_uint(payload, 143, 2);
+    msg->fix_type = parse_uint(payload, 143, 4);
+    msg->raim = parse_uint(payload, 147, 1);
+    msg->radio = parse_uint(payload, 148, 19);
     return true;
 }
 
@@ -109,14 +123,6 @@ bool parse_msg_10(AISMessage *msg, const char *payload) {
     msg->type = 10;
     msg->mmsi = parse_uint(payload, 8, 30);
     msg->dest_mmsi = parse_uint(payload, 40, 30);
-    return true;
-}
-
-bool parse_msg_11(AISMessage *msg, const char *payload) {
-    msg->type = 11;
-    msg->mmsi = parse_uint(payload, 8, 30);
-    msg->lat = parse_lat(payload, 61);
-    msg->lon = parse_lon(payload, 89);
     return true;
 }
 
@@ -295,7 +301,8 @@ bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
         case 1:
         case 2:
         case 3: return parse_msg_1_2_3(msg, payload);
-        case 4: return parse_msg_4(msg, payload);
+        case 4:
+        case 11: return parse_msg_4(msg, payload);
         case 5: return parse_msg_5(msg, payload);
         case 6: return parse_msg_6(msg, payload);
         case 7: return parse_msg_7(msg, payload);
@@ -303,7 +310,6 @@ bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
         case 9: return parse_msg_9(msg, payload);
         
         case 10: return parse_msg_10(msg, payload);
-        case 11: return parse_msg_11(msg, payload);
         case 12: return parse_msg_12(msg, payload);
         case 13: return parse_msg_13(msg, payload);
         case 14: return parse_msg_14(msg, payload);
