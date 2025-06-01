@@ -350,10 +350,34 @@ bool parse_msg_20(AISMessage *msg, const char *payload) {
 
 bool parse_msg_21(AISMessage *msg, const char *payload) {
     msg->type = 21;
+    msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
-    msg->lat = parse_lat(payload, 85);
-    msg->lon = parse_lon(payload, 57);
-    msg->vessel_name = parse_string(payload, 112, 120);  // name of aid-to-navigation
+    msg->aid_type = parse_uint(payload, 38, 5);
+    msg->vessel_name = parse_string(payload, 43, 120);
+    msg->accuracy = parse_uint(payload, 163, 1);
+    msg->lon = parse_lon(payload, 164);
+    msg->lat = parse_lat(payload, 192);
+    msg->dimension_to_bow = parse_uint(payload, 219, 9);
+    msg->dimension_to_stern = parse_uint(payload, 228, 9);
+    msg->dimension_to_port = parse_uint(payload, 237, 6);
+    msg->dimension_to_starboard = parse_uint(payload, 243, 6);
+    msg->fix_type = parse_uint(payload, 249, 4);
+    msg->timestamp = parse_uint(payload, 253, 6);
+    msg->off_position = parse_uint(payload, 259, 1);
+    msg->raim = parse_uint(payload, 268, 1);
+    msg->virtual_aid = parse_uint(payload, 269, 1);
+    msg->assigned = parse_uint(payload, 270, 1);
+    msg->spare = parse_uint(payload, 271, 1);
+    msg->radio = parse_uint(payload, 272, 19);
+
+    // Validation
+    if (msg->lat < -90 || msg->lat > 90) msg->lat = 91.0;
+    if (msg->lon < -180 || msg->lon > 180) msg->lon = 181.0;
+    if (msg->timestamp == 60) msg->timestamp = 255;
+    if (msg->fix_type == 0) msg->fix_type = 255;
+    if (msg->aid_type == 0 || msg->aid_type > 31) return false;
+    if (!msg->vessel_name || strlen(msg->vessel_name) == 0) return false;
+
     return true;
 }
 
