@@ -50,6 +50,11 @@ CREATE TABLE test_ais (id serial, sentence ais);
 
  pg_ais_get_int_field 
 -----------------------
+        366053209
+(1 row)
+
+ pg_ais_get_int_field 
+-----------------------
                 511
 (1 row)
 
@@ -60,5 +65,20 @@ CREATE TABLE test_ais (id serial, sentence ais);
 
  pg_ais_get_int_field 
 -----------------------
+ 
+(1 row)
+
+ pg_ais_get_float_field 
+-------------------------
+                     0
+(1 row)
+
+ pg_ais_get_float_field 
+-------------------------
+                 360.0
+(1 row)
+
+ pg_ais_get_float_field 
+-------------------------
  
 (1 row)

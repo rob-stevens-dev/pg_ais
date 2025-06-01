@@ -324,6 +324,28 @@ pg_ais_get_int_field(PG_FUNCTION_ARGS) {
 }
 
 
+PG_FUNCTION_INFO_V1(pg_ais_get_float_field);
+Datum
+pg_ais_get_float_field(PG_FUNCTION_ARGS) {
+    bytea *raw = PG_GETARG_BYTEA_P(0);
+    text *fieldname = PG_GETARG_TEXT_P(1);
+    char *cstr = text_to_cstring(fieldname);
+    AISMessage msg;
+
+    if (!parse_ais_message(raw, &msg)) {
+        PG_RETURN_NULL();
+    }
+
+    if (strcmp(cstr, "speed") == 0 && msg.speed >= 0) {
+        PG_RETURN_FLOAT8(msg.speed);
+    } else if (strcmp(cstr, "course") == 0 && msg.course >= 0) {
+        PG_RETURN_FLOAT8(msg.course);
+    }
+
+    PG_RETURN_NULL();
+}
+
+
 /* Internal utility functions. */
 void free_ais_message(AISMessage *msg) {
     if (msg->callsign) {

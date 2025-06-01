@@ -540,6 +540,26 @@ static void test_pg_ais_get_int_field_unsupported(void **state) {
 }
 
 
+static void test_pg_ais_get_float_field_speed(void **state) {
+    const char *nmea = "!AIVDM,1,1,,B,13aG?P0P00PD;88MD5MTDww@2D0T,0*1C";
+    text *field = cstring_to_text("speed");
+    bytea *raw = cstring_to_text_with_len(nmea, strlen(nmea));
+
+    Datum result = DirectFunctionCall2(pg_ais_get_float_field, PointerGetDatum(raw), PointerGetDatum(field));
+    double speed = DatumGetFloat8(result);
+    assert_true(speed >= 0.0);
+}
+
+static void test_pg_ais_get_float_field_unsupported(void **state) {
+    const char *nmea = "!AIVDM,1,1,,B,13aG?P0P00PD;88MD5MTDww@2D0T,0*1C";
+    text *field = cstring_to_text("foobar");
+    bytea *raw = cstring_to_text_with_len(nmea, strlen(nmea));
+
+    Datum result = DirectFunctionCall2(pg_ais_get_float_field, PointerGetDatum(raw), PointerGetDatum(field));
+    assert_true(DatumGetPointer(result) == NULL);
+}
+
+
 int main(void) {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_valid_fragment_parsing),
@@ -576,7 +596,8 @@ int main(void) {
         cmocka_unit_test(test_pg_ais_point_invalid),
         cmocka_unit_test(test_pg_ais_get_int_field_mmsi),
         cmocka_unit_test(test_pg_ais_get_int_field_unsupported),
-
+        cmocka_unit_test(test_pg_ais_get_float_field_speed),
+        cmocka_unit_test(test_pg_ais_get_float_field_unsupported),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }

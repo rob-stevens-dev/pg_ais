@@ -48,3 +48,9 @@ SELECT pg_ais_get_int_field(sentence, 'mmsi') FROM test_text_field;
 SELECT pg_ais_get_int_field(sentence, 'heading') FROM test_text_field;
 SELECT pg_ais_get_int_field(sentence, 'nav_status') FROM test_text_field;
 SELECT pg_ais_get_int_field(sentence, 'foobar') FROM test_text_field;
+
+
+-- Validate float field access
+SELECT pg_ais_get_float_field(sentence, 'speed') FROM test_text_field;
+SELECT pg_ais_get_float_field(sentence, 'course') FROM test_text_field;
+SELECT pg_ais_get_float_field(sentence, 'foobar') FROM test_text_field;
