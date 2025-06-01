@@ -362,9 +362,14 @@ static void test_msg_26_parsing(void **state) {
     assert_true(ok);
     assert_int_equal(msg.type, 26);
     assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
+    if (msg.structured) {
+        assert_true(msg.app_id != 0);
+    }
     assert_true(msg.bin_len > 0);
+    assert_non_null(msg.bin_data);
     free_ais_message(&msg);
 }
+
 
 static void test_msg_27_parsing(void **state) {
     AISMessage msg;
