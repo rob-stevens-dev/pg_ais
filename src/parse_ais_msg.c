@@ -223,7 +223,6 @@ bool parse_msg_10(AISMessage *msg, const char *payload) {
     return true;
 }
 
-
 bool parse_msg_12(AISMessage *msg, const char *payload) {
     msg->type = 12;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -238,8 +237,13 @@ bool parse_msg_12(AISMessage *msg, const char *payload) {
     msg->bin_len = bit_len / 6;
     msg->bin_data = parse_string(payload, text_start, bit_len);  // 6-bit ASCII safety text
 
+    // Validation
+    if (msg->dest_mmsi == 0 || msg->dest_mmsi > 999999999) return false;
+    if (!msg->bin_data || strlen(msg->bin_data) == 0) return false;
+
     return true;
 }
+
 
 bool parse_msg_13(AISMessage *msg, const char *payload) {
     msg->type = 13;
