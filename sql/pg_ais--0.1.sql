@@ -53,3 +53,14 @@ RETURNS TABLE (
     raim boolean
 ) AS 'MODULE_PATHNAME', 'pg_ais_fields'
 LANGUAGE C STRICT;
+
+-- Extract lon/lat from AIS message.
+CREATE FUNCTION pg_ais_point(text)
+RETURNS point
+AS 'MODULE_PATHNAME', 'pg_ais_point'
+LANGUAGE C STRICT;
+
+CREATE FUNCTION pg_ais_point(text)
+RETURNS bytea
+AS 'MODULE_PATHNAME', 'pg_ais_point_geom'
+LANGUAGE C STRICT;

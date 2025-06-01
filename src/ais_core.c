@@ -213,6 +213,63 @@ pg_ais_fields(PG_FUNCTION_ARGS) {
 }
 
 
+PG_FUNCTION_INFO_V1(pg_ais_point);
+Datum
+pg_ais_point(PG_FUNCTION_ARGS) {
+    text *txt = PG_GETARG_TEXT_PP(0);
+    char *input = text_to_cstring(txt);
+
+    AISMessage msg;
+    if (!parse_ais_from_text(input, &msg)) {
+        ereport(ERROR, (errmsg("invalid AIS message")));
+    }
+
+    // Validate lat/lon range
+    if (msg.lat < -90 || msg.lat > 90 || msg.lon < -180 || msg.lon > 180) {
+        free_ais_message(&msg);
+        PG_RETURN_NULL();
+    }
+
+    POINT *point = palloc(sizeof(POINT));
+    point->x = msg.lon;
+    point->y = msg.lat;
+
+    free_ais_message(&msg);
+    PG_RETURN_POINT_P(point);
+}
+
+
+PG_FUNCTION_INFO_V1(pg_ais_point_geom);
+Datum
+pg_ais_point_geom(PG_FUNCTION_ARGS) {
+    text *txt = PG_GETARG_TEXT_PP(0);
+    char *input = text_to_cstring(txt);
+
+    AISMessage msg;
+    if (!parse_ais_from_text(input, &msg)) {
+        ereport(ERROR, (errmsg("invalid AIS message")));
+    }
+
+    if (msg.lat < -90 || msg.lat > 90 || msg.lon < -180 || msg.lon > 180) {
+        free_ais_message(&msg);
+        PG_RETURN_NULL();
+    }
+
+    // WKB format: https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry#Well-known_binary
+    // SRID: 4326, GeometryType: 1 (Point)
+    uint8_t wkb[21] = {0x00}; // Big endian
+    wkb[0] = 0;               // big endian
+    wkb[1] = 0; wkb[2] = 0; wkb[3] = 0; wkb[4] = 0; // type placeholder
+    wkb[1] = 0x00; wkb[2] = 0x00; wkb[3] = 0x00; wkb[4] = 0x01; // WKBPoint
+
+    memcpy(&wkb[5], &msg.lon, 8);
+    memcpy(&wkb[13], &msg.lat, 8);
+
+    free_ais_message(&msg);
+    PG_RETURN_BYTEA_P(cstring_to_text_with_len((const char *)wkb, sizeof(wkb)));
+}
+
+
 /* Internal utility functions. */
 void free_ais_message(AISMessage *msg) {
     if (msg->callsign) {

@@ -26,3 +26,8 @@ CREATE INDEX ON ais_messages ((pg_ais_fields(sentence)).ship_type);
 -- Optional: Raw JSONB projection
 -- If you want hybrid support using pg_ais_debug
 CREATE INDEX ON ais_messages ((pg_ais_debug(sentence, 'json_enum')->'nav_status'));
+
+-- SELECT pg_ais_point(sentence) FROM ais_messages;
+-- SELECT pg_ais_point(sentence)::geometry FROM ais_messages; -- if PostGIS installed
+
+-- CREATE INDEX ON ais_messages USING GIST ((pg_ais_point(sentence)::geometry));
