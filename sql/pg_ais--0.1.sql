@@ -81,3 +81,8 @@ CREATE OR REPLACE FUNCTION pg_ais_get_float_field(sentence ais, fieldname text)
 RETURNS double precision
 AS 'MODULE_PATHNAME', 'pg_ais_get_float_field'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION pg_ais_get_bool_field(sentence ais, fieldname text)
+RETURNS boolean
+AS 'MODULE_PATHNAME', 'pg_ais_get_bool_field'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;

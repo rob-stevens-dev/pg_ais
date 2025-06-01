@@ -54,3 +54,10 @@ SELECT pg_ais_get_int_field(sentence, 'foobar') FROM test_text_field;
 SELECT pg_ais_get_float_field(sentence, 'speed') FROM test_text_field;
 SELECT pg_ais_get_float_field(sentence, 'course') FROM test_text_field;
 SELECT pg_ais_get_float_field(sentence, 'foobar') FROM test_text_field;
+
+
+
+-- Validate boolean field access
+SELECT pg_ais_get_bool_field(sentence, 'raim') FROM test_text_field;
+SELECT pg_ais_get_bool_field(sentence, 'accuracy') FROM test_text_field;
+SELECT pg_ais_get_bool_field(sentence, 'foobar') FROM test_text_field;

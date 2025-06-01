@@ -82,3 +82,18 @@ CREATE TABLE test_ais (id serial, sentence ais);
 -------------------------
  
 (1 row)
+
+ pg_ais_get_bool_field 
+------------------------
+ f
+(1 row)
+
+ pg_ais_get_bool_field 
+------------------------
+ t
+(1 row)
+
+ pg_ais_get_bool_field 
+------------------------
+ 
+(1 row)
