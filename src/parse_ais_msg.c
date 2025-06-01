@@ -329,7 +329,6 @@ bool parse_msg_16(AISMessage *msg, const char *payload) {
     return true;
 }
 
-
 bool parse_msg_17(AISMessage *msg, const char *payload) {
     msg->type = 17;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -341,10 +340,14 @@ bool parse_msg_17(AISMessage *msg, const char *payload) {
     int bin_bytes = bin_len / 8;
     msg->bin_len = bin_bytes;
     msg->bin_data = malloc(bin_bytes);
-    if (!msg->bin_data) return false;
+    if (!msg->bin_data || bin_bytes <= 0) return false;
     for (int i = 0; i < bin_bytes; i++) {
         msg->bin_data[i] = (char)parse_uint(payload, bin_start + i * 8, 8);
     }
+
+    // Validation
+    if (msg->bin_len == 0 || msg->bin_data == NULL) return false;
+
     return true;
 }
 
