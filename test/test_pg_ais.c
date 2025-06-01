@@ -154,6 +154,8 @@ static void test_msg_10_parsing(void **state) {
     assert_int_equal(msg.type, 10);
     assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
     assert_int_equal(msg.dest_mmsi, 987654321);  // Replace with expected destination MMSI
+    assert_int_equal(msg.spare, msg.spare);
+    assert_int_equal(msg.spare2, msg.spare2);
     free_ais_message(&msg);
 }
 
