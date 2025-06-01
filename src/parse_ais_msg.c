@@ -163,13 +163,18 @@ bool parse_msg_10(AISMessage *msg, const char *payload) {
 
 bool parse_msg_12(AISMessage *msg, const char *payload) {
     msg->type = 12;
+    msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
     msg->seq_num = parse_uint(payload, 38, 2);
     msg->dest_mmsi = parse_uint(payload, 40, 30);
+    msg->retransmit = parse_uint(payload, 70, 1);
+    msg->spare = parse_uint(payload, 71, 1);
+
     int text_start = 72;
     int bit_len = (int)(strlen(payload) * 6) - text_start;
     msg->bin_len = bit_len / 6;
-    msg->bin_data = parse_string(payload, text_start, bit_len);  // Reuse for 6-bit ASCII
+    msg->bin_data = parse_string(payload, text_start, bit_len);  // 6-bit ASCII safety text
+
     return true;
 }
 
