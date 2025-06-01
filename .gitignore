@@ -1,48 +1,22 @@
-# CMake build directory
-/build/
-!CMakeLists.txt
+# Ignore unknown root-level hex-like directories (docker volumes)
+# But allow known directories like 'docs'
+/0*/ 
+/1*/ 
+/2*/ 
+/3*/ 
+/4*/ 
+/5*/ 
+/6*/ 
+/7*/ 
+/8*/ 
+/9*/ 
+/a*/ 
+/b*/ 
+/c*/ 
+/d*/ 
+/e*/ 
+/f*/ 
 
-# CMake generated files
-CMakeCache.txt
-CMakeFiles/
-cmake_install.cmake
-CTestTestfile.cmake
-Makefile
-install_manifest.txt
-
-# Output binaries and shared objects
-pg_ais.so
-pg_ais_tests
-
-# Docker container/volume IDs or mounts
-0*/ 
-1*/ 
-2*/ 
-3*/ 
-4*/ 
-5*/ 
-6*/ 
-7*/ 
-8*/ 
-9*/ 
-a*/ 
-b*/ 
-c*/ 
-d*/ 
-e*/ 
-f*/ 
-
-# Editor/IDE backups
-*.swp
-*.swo
-*~
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Don’t ignore these known-good results
-!results/pg_ais_regression.out
-!sql/results/pg_ais_regression.out
-!sql/expected/pg_ais_regression.out
-!test/pg_ais_regression.out
+# Exception for versioned documentation
+!docs/
+!docs/**

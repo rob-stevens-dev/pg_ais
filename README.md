@@ -1,146 +1,160 @@
-# pg\_ais
+# pg_ais — AIS Message Type for PostgreSQL
 
-PostgreSQL extension for storing, validating, and eventually parsing and indexing NMEA 0183 v4.0+ AIS messages. Designed for high-performance marine tracking and time-series ingestion in PostgreSQL or TimescaleDB.
+**Store. Decode. Index. Integrate.**
 
----
+`pg_ais` is a PostgreSQL extension that introduces a native `ais` type for ingesting and decoding AIS (Automatic Identification System) messages conforming to NMEA 0183 v4.0+. It is engineered for high-throughput time-series ingestion, spatial indexing, and advanced analytics — without relying on any external libraries.
 
-## 📦 Features
-
-* ✅ Custom PostgreSQL `ais` type
-* ✅ Internally stored as VARLENA binary
-* ✅ Accepts and validates raw NMEA AIS sentences (must start with `!`)
-* ✅ Supports input/output casting and equality comparison
-* ✅ CMocka-based unit test coverage
-* ✅ SQL regression testing support
-* 🗽 Future: full NMEA 0183 message parser + binary generator
-* 📍 Future: integration with PostGIS for geospatial indexing
-* 📈 Future: support for MMSI/IMO-based indexing and query optimization
+> Built from scratch in C. Powered by PostgreSQL internals. Compatible with TimescaleDB and PostGIS.
 
 ---
 
-## 💠 Building (Manual)
+## ✨ Features
 
-If you are not using Docker:
-
-```bash
-mkdir build && cd build
-cmake ..
-make
-sudo make install
-```
-
-To install the extension in PostgreSQL:
-
-```sql
-CREATE EXTENSION pg_ais;
-```
+- ⚙️ **Native `ais` type**: Store AIS messages directly in PostgreSQL.
+- 🧠 **Full NMEA 0183 v4+ support**: Every official AIS message type is parsed.
+- 🔍 **Field accessors**: Extract integers, floats, enums, booleans, and strings with `pg_ais_get_*_field(...)`.
+- 🗺️ **Geospatial support**: Generate PostGIS `POINT` via `pg_ais_point(...)`.
+- 🧪 **Fully tested**: Regression tests and unit tests running inside Docker.
+- 📦 **High-performance deduplication**: Schema-level hash deduplication with unique indexes.
+- 🔍 **Indexing support**: Efficient indexing on computed fields (e.g. MMSI, ship name).
+- 🧰 **Built for TimescaleDB**: Copy-friendly ingestion, ideal for hypertables.
+- 🔧 **Zero dependency C code**: Built for PostgreSQL extension authors who care about internals.
 
 ---
 
-## 🐳 Docker-Based Development
+## 🚀 Getting Started
 
-### Build and Install Extension
-
-```bash
-docker-compose build
-```
-
-### Start PostgreSQL Dev Container
+The fastest way to try `pg_ais` is via Docker:
 
 ```bash
+git clone https://github.com/yourname/pg_ais.git
+cd pg_ais
 make docker-up
+make docker-install
+make docker-regression  # run tests
 ```
 
-### Shut Down PostgreSQL Dev Container
-
-```bash
-make docker-down
-```
-
----
-
-## 💪 Testing
-
-### Run All Tests (Unit + SQL Regression)
-
-```bash
-make test_all
-# OR
-./scripts/test_all.sh
-```
-
-This will:
-
-* Rebuild the extension inside Docker
-* Run CMocka unit tests (`pg_ais_tests`)
-* Run SQL regression tests and diff output
-
-### Run Unit Tests Only
-
-```bash
-make test_phase1
-```
-
-### Run SQL Regression Test Only
-
-```bash
-make sql_regression
-```
-
----
-
-## 💡 Example Usage: AIS Type
-
-Once the extension is installed:
+Then inside `psql`:
 
 ```sql
--- Load the extension
 CREATE EXTENSION pg_ais;
 
--- Create a table using the `ais` type
-CREATE TABLE ais_messages (
-    id serial PRIMARY KEY,
-    sentence ais
+CREATE TABLE ais_data (
+  id SERIAL PRIMARY KEY,
+  sentence ais
 );
 
--- Insert a valid NMEA 0183 AIS sentence
-INSERT INTO ais_messages(sentence)
-VALUES ('!AIVDM,1,1,,A,15Muq60001G?tTpE>Gbk0?wN0<0,0*7D');
+INSERT INTO ais_data(sentence) VALUES
+  ('!AIVDM,1,1,,A,15Muq60001G?tTpE>Gbk0?wN0<0,0*7D');
 
--- Query the raw sentence
-SELECT id, sentence::text FROM ais_messages;
+SELECT pg_ais_get_int_field(sentence, 'mmsi') FROM ais_data;
 ```
 
 ---
 
-## 📎 Project Structure
+## 🧪 Example: Extracting & Indexing Fields
 
-```text
-pg_ais/
-├── src/                 # C source files (pg_ais.c, pg_ais_core.c)
-├── test/                # CMocka and SQL regression tests
-├── sql/                 # SQL extension definition (pg_ais--0.2.sql)
-├── scripts/             # Test harness and helper scripts
-├── docker/              # Dockerfile and config
-├── docker-compose.yml   # Local Postgres dev container
-├── Makefile             # Project commands
-└── README.md
+```sql
+-- Extract MMSI and position
+SELECT
+  pg_ais_get_int_field(sentence, 'mmsi') AS mmsi,
+  pg_ais_point(sentence) AS position
+FROM ais_data;
+
+-- Index on extracted field
+CREATE INDEX ON ais_data ((pg_ais_get_int_field(sentence, 'mmsi')));
 ```
 
 ---
 
-## 🔮 Roadmap
+## 🛡️ Recommended: Deduplication Strategy
 
-* [ ] Full AIS sentence parser (type-aware, all message classes)
-* [ ] Binary encoder for outbound messages
-* [ ] Multi-part AIS support (message types 5, 24, etc.)
-* [ ] Geospatial integration with PostGIS
-* [ ] Index support for MMSI, IMO, and timestamp fields
-* [ ] JSON/JSONB output format support
-* [ ] TimescaleDB optimization
+When ingesting high-volume AIS data, use this schema pattern:
+
+```sql
+ALTER TABLE ais_data
+  ADD COLUMN msg_hash BYTEA GENERATED ALWAYS AS (digest(sentence::text, 'md5')) STORED;
+
+CREATE UNIQUE INDEX ON ais_data (msg_hash);
+```
+
+Then ingest with:
+```sql
+INSERT INTO ais_data(sentence) VALUES ('...')
+ON CONFLICT DO NOTHING;
+```
+
+This avoids storing duplicates while remaining COPY-friendly and scalable. See [docs/deduplication.md](docs/deduplication.md).
 
 ---
 
-## 🪪 License
+## 🌐 Integration with PostGIS & TimescaleDB
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+`pg_ais` plays well with:
+
+- **PostGIS**:
+  ```sql
+  SELECT ST_SetSRID(pg_ais_point(sentence), 4326) FROM ais_data;
+  ```
+
+- **TimescaleDB**:
+  ```sql
+  SELECT create_hypertable('ais_data', 'timestamp');
+  ```
+
+See [docs/integration.md](docs/integration.md) for full usage patterns.
+
+---
+
+## 🧭 Optional: JSONB Output for Debugging
+
+If you want to explore AIS messages in external tools (e.g., Grafana):
+
+```sql
+CREATE VIEW ais_data_json AS
+SELECT id, pg_ais_debug(sentence) AS msg FROM ais_data;
+```
+
+`pg_ais_debug(...)` returns a structured JSONB object with all decoded fields.
+
+See [docs/usage_examples.md](docs/usage_examples.md).
+
+---
+
+## 🧠 Author & Purpose
+
+This project showcases deep PostgreSQL internals experience — from custom types and parsing, to extension safety, regression testing, and production-ready deployment.
+
+If you're a company working on:
+- Maritime data platforms
+- Real-time vessel tracking
+- GIS or spatial analytics
+- PostgreSQL extension development
+
+...then this work demonstrates the capability to build low-level, scalable, performant PostgreSQL-native solutions with discipline and elegance.
+
+Built with love and a hex editor.
+
+---
+
+## 📚 Additional Docs
+
+See `docs/`:
+
+- [Getting Started](docs/getting_started.md)
+- [Usage Examples](docs/usage_examples.md)
+- [Deduplication](docs/deduplication.md)
+- [Indexing Guidance](docs/indexing.md)
+- [PostGIS & Timescale Integration](docs/integration.md)
+
+---
+
+## 🧪 Testing & Contribution
+
+To run tests:
+```bash
+make docker-test       # Run C unit tests
+make docker-regression # Run SQL regression tests
+```
+
+PRs welcome. Bring your own vessel.
