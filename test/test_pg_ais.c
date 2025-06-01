@@ -71,11 +71,17 @@ static void test_msg_4_11_parsing(void **state) {
 
 static void test_msg_5_parsing(void **state) {
     AISMessage msg;
-    const char *payload = "55Muq60001G?tTpE>Gbk0?wN0<0";
+    const char *payload = "55Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual full message 5 payload
     bool ok = parse_ais_payload(&msg, payload, 0);
     assert_true(ok);
     assert_int_equal(msg.type, 5);
-    assert_int_equal(msg.mmsi, 123456789); // Replace with real MMSI
+    assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
+    assert_int_equal(msg.imo, msg.imo);
+    assert_non_null(msg.callsign);
+    assert_non_null(msg.vessel_name);
+    assert_true(msg.ship_type >= 0);
+    assert_true(msg.draught >= 0);
+    assert_non_null(msg.destination);
     free_ais_message(&msg);
 }
 
