@@ -153,8 +153,11 @@ bool parse_msg_9(AISMessage *msg, const char *payload) {
 
 bool parse_msg_10(AISMessage *msg, const char *payload) {
     msg->type = 10;
+    msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
+    msg->spare = parse_uint(payload, 38, 2);
     msg->dest_mmsi = parse_uint(payload, 40, 30);
+    msg->spare2 = parse_uint(payload, 70, 2);
     return true;
 }
 
