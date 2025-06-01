@@ -135,7 +135,14 @@ static void test_msg_9_parsing(void **state) {
     assert_true(ok);
     assert_int_equal(msg.type, 9);
     assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
-    // Optionally assert altitude, lat/lon, speed, heading
+    assert_true(msg.lat != 0.0);
+    assert_true(msg.lon != 0.0);
+    assert_true(msg.speed >= 0);
+    assert_true(msg.heading >= 0);
+    assert_int_equal(msg.alt_sensor, msg.alt_sensor);
+    assert_int_equal(msg.altitude, msg.altitude);
+    assert_int_equal(msg.dte, msg.dte);
+    assert_int_equal(msg.radio, msg.radio);
     free_ais_message(&msg);
 }
 
