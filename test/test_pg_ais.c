@@ -239,7 +239,9 @@ static void test_msg_17_parsing(void **state) {
     assert_true(ok);
     assert_int_equal(msg.type, 17);
     assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
+    assert_int_equal(msg.spare, msg.spare);
     assert_true(msg.bin_len > 0);
+    assert_non_null(msg.bin_data);
     free_ais_message(&msg);
 }
 
