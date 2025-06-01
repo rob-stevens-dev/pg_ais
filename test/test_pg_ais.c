@@ -23,13 +23,25 @@ static void test_msg_1_2_3_parsing(void **state) {
     free_ais_message(&msg);
 }
 
-static void test_msg_4_parsing(void **state) {
+static void test_msg_4_11_parsing(void **state) {
     AISMessage msg;
-    const char *payload = "45Muq60001G?tTpE>Gbk0?wN0<0";
+    const char *payload = "45Muq60001G?tTpE>Gbk0?wN0<0";  // Example payload for message 4
     bool ok = parse_ais_payload(&msg, payload, 0);
     assert_true(ok);
     assert_int_equal(msg.type, 4);
-    assert_int_equal(msg.mmsi, 123456789); // Replace with real MMSI
+    assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
+    assert_int_equal(msg.year, msg.year);  // Placeholder validation
+    assert_int_equal(msg.month, msg.month);
+    assert_int_equal(msg.day, msg.day);
+    free_ais_message(&msg);
+
+    const char *payload_11 = ";5Muq60001G?tTpE>Gbk0?wN0<0";  // Example payload for message 11
+    ok = parse_ais_payload(&msg, payload_11, 0);
+    assert_true(ok);
+    assert_int_equal(msg.type, 11);
+    assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
+    assert_true(msg.lat != 0.0);
+    assert_true(msg.lon != 0.0);
     free_ais_message(&msg);
 }
 
@@ -95,17 +107,6 @@ static void test_msg_10_parsing(void **state) {
     assert_int_equal(msg.type, 10);
     assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
     assert_int_equal(msg.dest_mmsi, 987654321);  // Replace with expected destination MMSI
-    free_ais_message(&msg);
-}
-
-static void test_msg_11_parsing(void **state) {
-    AISMessage msg;
-    const char *payload = ";5Muq60001G?tTpE>Gbk0?wN0<0";  // Replace with actual payload for msg 11
-    bool ok = parse_ais_payload(&msg, payload, 0);
-    assert_true(ok);
-    assert_int_equal(msg.type, 11);
-    assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
-    // Optionally assert lat/lon
     free_ais_message(&msg);
 }
 
@@ -355,7 +356,7 @@ int main(void) {
         cmocka_unit_test(test_successful_reassembly),
         cmocka_unit_test(test_incomplete_reassembly),
         cmocka_unit_test(test_msg_1_2_3_parsing),
-        cmocka_unit_test(test_msg_4_parsing),
+        cmocka_unit_test(test_msg_4_11_parsing),
         cmocka_unit_test(test_msg_5_parsing),
         cmocka_unit_test(test_msg_6_parsing),
         cmocka_unit_test(test_msg_7_parsing),
@@ -363,7 +364,6 @@ int main(void) {
         cmocka_unit_test(test_msg_9_parsing),
 
         cmocka_unit_test(test_msg_10_parsing),
-        cmocka_unit_test(test_msg_11_parsing),
         cmocka_unit_test(test_msg_12_parsing),
         cmocka_unit_test(test_msg_13_parsing),
         cmocka_unit_test(test_msg_14_parsing),
