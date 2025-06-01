@@ -263,24 +263,52 @@ bool parse_msg_17(AISMessage *msg, const char *payload) {
     return true;
 }
 
-bool parse_msg_18(AISMessage *msg, const char *payload) {
-    msg->type = 18;
+bool parse_msg_18_19_24(AISMessage *msg, const char *payload) {
+    msg->type = parse_uint(payload, 0, 6);
+    msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
     msg->speed = parse_speed(payload, 46);
-    msg->lat = parse_lat(payload, 85);
+    msg->accuracy = parse_uint(payload, 56, 1);
     msg->lon = parse_lon(payload, 57);
+    msg->lat = parse_lat(payload, 85);
+    msg->course = parse_uint(payload, 112, 12) / 10.0;
     msg->heading = parse_heading(payload, 124);
-    return true;
-}
+    msg->timestamp = parse_uint(payload, 133, 6);
+    msg->raim = parse_uint(payload, 148, 1);
+    msg->radio = parse_uint(payload, 149, 19);
 
-bool parse_msg_19(AISMessage *msg, const char *payload) {
-    msg->type = 19;
-    msg->mmsi = parse_uint(payload, 8, 30);
-    msg->speed = parse_speed(payload, 46);
-    msg->lat = parse_lat(payload, 85);
-    msg->lon = parse_lon(payload, 57);
-    msg->heading = parse_heading(payload, 124);
-    msg->vessel_name = parse_string(payload, 143, 120);  // 20 chars * 6 bits
+    // Validation rules
+    if (msg->lat < -90 || msg->lat > 90) msg->lat = 91.0;
+    if (msg->lon < -180 || msg->lon > 180) msg->lon = 181.0;
+    if (msg->speed > 102.2) msg->speed = -1;
+    if (msg->course >= 360.0) msg->course = -1;
+    if (msg->heading >= 511) msg->heading = -1;
+    if (msg->timestamp == 60) msg->timestamp = 255;  // 255 indicates invalid timestamp
+
+    if (msg->type == 19) {
+        msg->ship_type = parse_uint(payload, 143, 8);
+        msg->callsign = parse_string(payload, 151, 42);
+        msg->vessel_name = parse_string(payload, 193, 120);
+        msg->dimension_to_bow = parse_uint(payload, 313, 9);
+        msg->dimension_to_stern = parse_uint(payload, 322, 9);
+        msg->dimension_to_port = parse_uint(payload, 331, 6);
+        msg->dimension_to_starboard = parse_uint(payload, 337, 6);
+        msg->fix_type = parse_uint(payload, 343, 4);
+    } else if (msg->type == 24) {
+        int part = parse_uint(payload, 38, 2);
+        if (part == 0) {
+            msg->vessel_name = parse_string(payload, 40, 120);
+        } else if (part == 1) {
+            msg->callsign = parse_string(payload, 40, 42);
+            msg->ship_type = parse_uint(payload, 82, 8);
+            msg->dimension_to_bow = parse_uint(payload, 90, 9);
+            msg->dimension_to_stern = parse_uint(payload, 99, 9);
+            msg->dimension_to_port = parse_uint(payload, 108, 6);
+            msg->dimension_to_starboard = parse_uint(payload, 114, 6);
+            msg->fix_type = parse_uint(payload, 120, 4);
+        }
+    }
+
     return true;
 }
 
@@ -312,19 +340,6 @@ bool parse_msg_23(AISMessage *msg, const char *payload) {
     msg->type = 23;
     msg->mmsi = parse_uint(payload, 8, 30);
     msg->app_id = parse_uint(payload, 40, 12);  // placeholder for NE/SE slot time info
-    return true;
-}
-
-bool parse_msg_24(AISMessage *msg, const char *payload) {
-    msg->type = 24;
-    msg->mmsi = parse_uint(payload, 8, 30);
-    int part = parse_uint(payload, 38, 2);
-    if (part == 0) {
-        msg->vessel_name = parse_string(payload, 40, 120);  // 20 characters
-    } else if (part == 1) {
-        msg->callsign = parse_string(payload, 40, 42);      // 7 characters
-        // Additional fields like ship type, dimensions, etc. could be added here
-    }
     return true;
 }
 
@@ -373,8 +388,10 @@ bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
         case 1:
         case 2:
         case 3: return parse_msg_1_2_3(msg, payload);
+        
         case 4:
         case 11: return parse_msg_4(msg, payload);
+        
         case 5: return parse_msg_5(msg, payload);
         case 6: return parse_msg_6(msg, payload);
         case 7: return parse_msg_7(msg, payload);
@@ -388,14 +405,15 @@ bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
         case 15: return parse_msg_15(msg, payload);
         case 16: return parse_msg_16(msg, payload);
         case 17: return parse_msg_17(msg, payload);
-        case 18: return parse_msg_18(msg, payload);
-        case 19: return parse_msg_19(msg, payload);
+
+        case 18:
+        case 19:
+        case 24: return parse_msg_18_19_24(msg, payload);
 
         case 20: return parse_msg_20(msg, payload);
         case 21: return parse_msg_21(msg, payload);
         case 22: return parse_msg_22(msg, payload);
         case 23: return parse_msg_23(msg, payload);
-        case 24: return parse_msg_24(msg, payload);
         case 25: return parse_msg_25(msg, payload);
         case 26: return parse_msg_26(msg, payload);
         case 27: return parse_msg_27(msg, payload);
