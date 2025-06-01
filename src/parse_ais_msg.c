@@ -133,12 +133,21 @@ bool parse_msg_8(AISMessage *msg, const char *payload) {
 
 bool parse_msg_9(AISMessage *msg, const char *payload) {
     msg->type = 9;
+    msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
     msg->altitude = parse_uint(payload, 38, 12);
     msg->speed = parse_speed(payload, 50);
-    msg->lat = parse_lat(payload, 61);
-    msg->lon = parse_lon(payload, 89);
+    msg->accuracy = parse_uint(payload, 60, 1);
+    msg->lon = parse_lon(payload, 61);
+    msg->lat = parse_lat(payload, 89);
+    msg->course = parse_uint(payload, 116, 12) / 10.0;
     msg->heading = parse_heading(payload, 128);
+    msg->timestamp = parse_uint(payload, 137, 6);
+    msg->alt_sensor = parse_uint(payload, 143, 1);
+    msg->spare = parse_uint(payload, 144, 7);
+    msg->dte = parse_uint(payload, 151, 1);
+    msg->raim = parse_uint(payload, 152, 1);
+    msg->radio = parse_uint(payload, 153, 19);
     return true;
 }
 
