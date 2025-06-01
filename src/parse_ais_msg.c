@@ -180,7 +180,6 @@ bool parse_msg_8(AISMessage *msg, const char *payload) {
     return true;
 }
 
-
 bool parse_msg_9(AISMessage *msg, const char *payload) {
     msg->type = 9;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -198,8 +197,19 @@ bool parse_msg_9(AISMessage *msg, const char *payload) {
     msg->dte = parse_uint(payload, 151, 1);
     msg->raim = parse_uint(payload, 152, 1);
     msg->radio = parse_uint(payload, 153, 19);
+
+    // Validation
+    if (msg->lat < -90 || msg->lat > 90) msg->lat = 91.0;
+    if (msg->lon < -180 || msg->lon > 180) msg->lon = 181.0;
+    if (msg->speed > 102.2) msg->speed = -1;
+    if (msg->course >= 360.0) msg->course = -1;
+    if (msg->heading >= 511) msg->heading = -1;
+    if (msg->timestamp == 60) msg->timestamp = 255;
+    if (msg->altitude == 4095) msg->altitude = -1;  // 4095 = not available
+
     return true;
 }
+
 
 bool parse_msg_10(AISMessage *msg, const char *payload) {
     msg->type = 10;
