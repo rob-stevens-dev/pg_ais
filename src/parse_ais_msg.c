@@ -4,33 +4,22 @@
 #include "bitfield.h"
 #include <string.h>
 
-bool parse_msg_1(AISMessage *msg, const char *payload) {
+bool parse_msg_1_2_3(AISMessage *msg, const char *payload) {
     msg->type = 1;
     msg->mmsi = parse_uint(payload, 8, 30);
-    msg->lat = parse_lat(payload, 89);
-    msg->lon = parse_lon(payload, 61);
+    msg->repeat = parse_uint(payload, 6, 2);
+    msg->nav_status = parse_uint(payload, 38, 4);
+    msg->rot = parse_uint(payload, 42, 8);  // Rate of turn
     msg->speed = parse_speed(payload, 50);
-    msg->heading = parse_heading(payload, 128);
-    return true;
-}
-
-bool parse_msg_2(AISMessage *msg, const char *payload) {
-    msg->type = 2;
-    msg->mmsi = parse_uint(payload, 8, 30);
-    msg->lat = parse_lat(payload, 89);
+    msg->accuracy = parse_uint(payload, 60, 1);
     msg->lon = parse_lon(payload, 61);
-    msg->speed = parse_speed(payload, 50);
-    msg->heading = parse_heading(payload, 128);
-    return true;
-}
-
-bool parse_msg_3(AISMessage *msg, const char *payload) {
-    msg->type = 3;
-    msg->mmsi = parse_uint(payload, 8, 30);
     msg->lat = parse_lat(payload, 89);
-    msg->lon = parse_lon(payload, 61);
-    msg->speed = parse_speed(payload, 50);
+    msg->course = parse_uint(payload, 116, 12) / 10.0;
     msg->heading = parse_heading(payload, 128);
+    msg->timestamp = parse_uint(payload, 137, 6);
+    msg->maneuver = parse_uint(payload, 143, 2);
+    msg->raim = parse_uint(payload, 148, 1);
+    msg->radio = parse_uint(payload, 149, 19);
     return true;
 }
 
@@ -303,9 +292,9 @@ bool parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
     if (!payload || strlen(payload) < 1) return false;
     int msg_type = parse_uint(payload, 0, 6);
     switch (msg_type) {
-        case 1: return parse_msg_1(msg, payload);
-        case 2: return parse_msg_2(msg, payload);
-        case 3: return parse_msg_3(msg, payload);
+        case 1:
+        case 2:
+        case 3: return parse_msg_1_2_3(msg, payload);
         case 4: return parse_msg_4(msg, payload);
         case 5: return parse_msg_5(msg, payload);
         case 6: return parse_msg_6(msg, payload);
