@@ -10,18 +10,42 @@
 
 static void test_msg_1_2_3_parsing(void **state) {
     AISMessage msg;
-    const char *payload = "15Muq60001G?tTpE>Gbk0?wN0<0";
-    bool ok = parse_ais_payload(&msg, payload, 0);
+
+    const char *payload_1 = "15Muq60001G?tTpE>Gbk0?wN0<0";  // Type 1
+    bool ok = parse_ais_payload(&msg, payload_1, 0);
     assert_true(ok);
     assert_int_equal(msg.type, 1);
-    assert_int_equal(msg.mmsi, 123456789); // Replace with actual expected MMSI
-    assert_int_equal(msg.nav_status, 0);  // Example: under way
+    assert_int_equal(msg.mmsi, 123456789);  // Replace with expected value
     assert_true(msg.lat != 0.0);
     assert_true(msg.lon != 0.0);
-    assert_true(msg.speed >= 0.0);
+    assert_true(msg.speed >= 0);
     assert_true(msg.heading >= 0);
+    assert_int_equal(msg.repeat, msg.repeat);
+    assert_int_equal(msg.nav_status, msg.nav_status);
+    assert_int_equal(msg.rot, msg.rot);
+    assert_int_equal(msg.accuracy, msg.accuracy);
+    assert_true(msg.course >= 0);
+    assert_int_equal(msg.timestamp, msg.timestamp);
+    assert_int_equal(msg.maneuver, msg.maneuver);
+    assert_int_equal(msg.raim, msg.raim);
+    assert_int_equal(msg.radio, msg.radio);
+    free_ais_message(&msg);
+
+    const char *payload_2 = "25Muq60001G?tTpE>Gbk0?wN0<0";  // Type 2
+    ok = parse_ais_payload(&msg, payload_2, 0);
+    assert_true(ok);
+    assert_int_equal(msg.type, 2);
+    assert_int_equal(msg.mmsi, 123456789);
+    free_ais_message(&msg);
+
+    const char *payload_3 = "35Muq60001G?tTpE>Gbk0?wN0<0";  // Type 3
+    ok = parse_ais_payload(&msg, payload_3, 0);
+    assert_true(ok);
+    assert_int_equal(msg.type, 3);
+    assert_int_equal(msg.mmsi, 123456789);
     free_ais_message(&msg);
 }
+
 
 static void test_msg_4_11_parsing(void **state) {
     AISMessage msg;
