@@ -194,7 +194,9 @@ static void test_msg_14_parsing(void **state) {
     assert_true(ok);
     assert_int_equal(msg.type, 14);
     assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
-    // Optionally assert bin_data (safety message text)
+    assert_int_equal(msg.spare, msg.spare);
+    assert_non_null(msg.bin_data);
+    assert_true(msg.bin_len > 0);
     free_ais_message(&msg);
 }
 
