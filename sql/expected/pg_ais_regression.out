@@ -1,0 +1,112 @@
+-- Load the extension
+CREATE EXTENSION IF NOT EXISTS pg_ais;
+
+-- Regression test: clean table
+DROP TABLE IF EXISTS test_ais;
+CREATE TABLE test_ais (id serial, sentence ais);
+
+-- ✅ 1. Valid multi-part message (reassembled)
+ pg_ais_parse
+---------------------------------------------------------------
+ {"mmsi":123456789,"lat":42.123456,"lon":-70.654321,"speed":14.2,"heading":82.5}
+(1 row)
+
+-- ✅ 2. Out-of-order message (discarded)
+ pg_ais_parse
+--------------
+ 
+(1 row)
+
+ pg_ais_parse
+--------------
+ 
+(1 row)
+
+-- ✅ 3. Incomplete message (ignored)
+ pg_ais_parse
+--------------
+ 
+(1 row)
+
+-- ✅ 4. Point output
+ pg_ais_point
+---------------------------
+(-63.056667,44.651943)
+(1 row)
+
+-- ✅ 5. WKB hex output for point
+ encode
+----------------------------------
+0000000001404f4adf5c28f5c3c05fae147ae147ae1
+(1 row)
+
+-- ✅ 6. Round-trip parse-point validation
+ ok
+----
+ t
+(1 row)
+
+ id | shipname 
+----+----------
+  1 | SEAWAY
+(1 row)
+
+ should_be_null 
+----------------
+ 
+(1 row)
+
+     pg_ais_point     
+-----------------------
+ (-122.341133,37.769535)
+(1 row)
+
+ pg_ais_get_int_field 
+-----------------------
+        366053209
+(1 row)
+
+ pg_ais_get_int_field 
+-----------------------
+                511
+(1 row)
+
+ pg_ais_get_int_field 
+-----------------------
+                  0
+(1 row)
+
+ pg_ais_get_int_field 
+-----------------------
+ 
+(1 row)
+
+ pg_ais_get_float_field 
+-------------------------
+                     0
+(1 row)
+
+ pg_ais_get_float_field 
+-------------------------
+                 360.0
+(1 row)
+
+ pg_ais_get_float_field 
+-------------------------
+ 
+(1 row)
+
+ pg_ais_get_bool_field 
+------------------------
+ f
+(1 row)
+
+ pg_ais_get_bool_field 
+------------------------
+ t
+(1 row)
+
+ pg_ais_get_bool_field 
+------------------------
+ 
+(1 row)
