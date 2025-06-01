@@ -412,8 +412,28 @@ bool parse_msg_22(AISMessage *msg, const char *payload) {
 
 bool parse_msg_23(AISMessage *msg, const char *payload) {
     msg->type = 23;
+    msg->repeat = parse_uint(payload, 6, 2);
     msg->mmsi = parse_uint(payload, 8, 30);
-    msg->app_id = parse_uint(payload, 40, 12);  // placeholder for NE/SE slot time info
+    msg->ne_lon = parse_lon(payload, 40);
+    msg->ne_lat = parse_lat(payload, 58);
+    msg->sw_lon = parse_lon(payload, 76);
+    msg->sw_lat = parse_lat(payload, 94);
+    msg->station_type = parse_uint(payload, 112, 4);
+    msg->type_of_ship = parse_uint(payload, 116, 8);
+    msg->txrx_mode = parse_uint(payload, 124, 2);
+    msg->interval = parse_uint(payload, 126, 4);
+    msg->quiet = parse_uint(payload, 130, 4);
+    msg->spare = parse_uint(payload, 134, 6);
+
+    // Validation
+    if (msg->ne_lat < -90 || msg->ne_lat > 90) msg->ne_lat = 91.0;
+    if (msg->ne_lon < -180 || msg->ne_lon > 180) msg->ne_lon = 181.0;
+    if (msg->sw_lat < -90 || msg->sw_lat > 90) msg->sw_lat = 91.0;
+    if (msg->sw_lon < -180 || msg->sw_lon > 180) msg->sw_lon = 181.0;
+    if (msg->txrx_mode > 3) return false;
+    if (msg->interval > 15) return false;
+    if (msg->quiet > 15) return false;
+
     return true;
 }
 
