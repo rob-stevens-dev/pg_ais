@@ -36,3 +36,15 @@ SELECT id, pg_ais_get_text_field(sentence, 'shipname') AS shipname FROM test_tex
 
 -- Validate access to an unsupported field (expect NULL)
 SELECT pg_ais_get_text_field(sentence, 'foobar') AS should_be_null FROM test_text_field;
+
+
+-- pg_get_int_field tests
+-- Insert a type 1 message (positional report with int fields)
+INSERT INTO test_text_field(sentence) VALUES
+('!AIVDM,1,1,,B,13aG?P0P00PD;88MD5MTDww@2D0T,0*1C');
+
+-- Validate integer field access
+SELECT pg_ais_get_int_field(sentence, 'mmsi') FROM test_text_field;
+SELECT pg_ais_get_int_field(sentence, 'heading') FROM test_text_field;
+SELECT pg_ais_get_int_field(sentence, 'nav_status') FROM test_text_field;
+SELECT pg_ais_get_int_field(sentence, 'foobar') FROM test_text_field;

@@ -42,3 +42,23 @@ CREATE TABLE test_ais (id serial, sentence ais);
 -----------------------
  (-122.341133,37.769535)
 (1 row)
+
+ pg_ais_get_int_field 
+-----------------------
+        366053209
+(1 row)
+
+ pg_ais_get_int_field 
+-----------------------
+                511
+(1 row)
+
+ pg_ais_get_int_field 
+-----------------------
+                  0
+(1 row)
+
+ pg_ais_get_int_field 
+-----------------------
+ 
+(1 row)

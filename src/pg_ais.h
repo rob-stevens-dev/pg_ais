@@ -65,5 +65,6 @@ PGDLLEXPORT Datum pg_ais_debug(PG_FUNCTION_ARGS);
 PGDLLEXPORT Datum pg_ais_fields(PG_FUNCTION_ARGS);
 PGDLLEXPORT Datum pg_ais_point(PG_FUNCTION_ARGS);
 PGDLLEXPORT Datum pg_ais_point_geom(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum pg_ais_get_int_field(PG_FUNCTION_ARGS);
 
 #endif
