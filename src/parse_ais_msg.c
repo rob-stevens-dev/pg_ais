@@ -5,11 +5,11 @@
 #include <string.h>
 
 bool parse_msg_1_2_3(AISMessage *msg, const char *payload) {
-    msg->type = 1;
-    msg->mmsi = parse_uint(payload, 8, 30);
+    msg->type = parse_uint(payload, 0, 6);
     msg->repeat = parse_uint(payload, 6, 2);
+    msg->mmsi = parse_uint(payload, 8, 30);
     msg->nav_status = parse_uint(payload, 38, 4);
-    msg->rot = parse_uint(payload, 42, 8);  // Rate of turn
+    msg->rot = parse_uint(payload, 42, 8);  // Rate of turn (special handling may apply)
     msg->speed = parse_speed(payload, 50);
     msg->accuracy = parse_uint(payload, 60, 1);
     msg->lon = parse_lon(payload, 61);
@@ -20,6 +20,15 @@ bool parse_msg_1_2_3(AISMessage *msg, const char *payload) {
     msg->maneuver = parse_uint(payload, 143, 2);
     msg->raim = parse_uint(payload, 148, 1);
     msg->radio = parse_uint(payload, 149, 19);
+
+    // Validation
+    if (msg->lat < -90 || msg->lat > 90) msg->lat = 91.0;
+    if (msg->lon < -180 || msg->lon > 180) msg->lon = 181.0;
+    if (msg->speed > 102.2) msg->speed = -1;
+    if (msg->course >= 360.0) msg->course = -1;
+    if (msg->heading >= 511) msg->heading = -1;
+    if (msg->timestamp == 60) msg->timestamp = 255;
+
     return true;
 }
 
