@@ -16,6 +16,38 @@ PG_MODULE_MAGIC;
 
 static AISFragmentBuffer frag_buffer;
 
+
+#define ADD_NUMERIC_FIELD(key, valexpr) \
+    do { \
+        JsonbValue _v = {.type = jbvNumeric}; \
+        _v.val.numeric = int_to_numeric(valexpr); \
+        pushJsonbValue(&state, WJB_KEY, &((JsonbValue){.type = jbvString, .val.string.val = key, .val.string.len = strlen(key)})); \
+        pushJsonbValue(&state, WJB_VALUE, &_v); \
+    } while(0)
+
+#define ADD_FLOAT_FIELD(key, valexpr) \
+    do { \
+        char _buf[32]; \
+        snprintf(_buf, sizeof(_buf), "%.6f", valexpr); \
+        JsonbValue _v = {.type = jbvString}; \
+        _v.val.string.val = _buf; \
+        _v.val.string.len = strlen(_buf); \
+        pushJsonbValue(&state, WJB_KEY, &((JsonbValue){.type = jbvString, .val.string.val = key, .val.string.len = strlen(key)})); \
+        pushJsonbValue(&state, WJB_VALUE, &_v); \
+    } while(0)
+
+#define ADD_STRING_FIELD(key, valexpr) \
+    do { \
+        if (valexpr) { \
+            JsonbValue _v = {.type = jbvString}; \
+            _v.val.string.val = (char *)valexpr; \
+            _v.val.string.len = strlen(valexpr); \
+            pushJsonbValue(&state, WJB_KEY, &((JsonbValue){.type = jbvString, .val.string.val = key, .val.string.len = strlen(key)})); \
+            pushJsonbValue(&state, WJB_VALUE, &_v); \
+        } \
+    } while(0)
+
+
 PG_FUNCTION_INFO_V1(pg_ais_parse);
 Datum
 pg_ais_parse(PG_FUNCTION_ARGS) {
@@ -79,7 +111,6 @@ ais_out(PG_FUNCTION_ARGS) {
     PG_RETURN_CSTRING(ais_to_cstring(val));
 }
 
-PG_FUNCTION_INFO_V1(pg_ais_debug);
 Datum
 pg_ais_debug(PG_FUNCTION_ARGS) {
     text *txt = PG_GETARG_TEXT_PP(0);
@@ -99,11 +130,32 @@ pg_ais_debug(PG_FUNCTION_ARGS) {
 
     if (format_enum_output) {
         append_jsonb_enum_field(&state, "nav_status", msg.nav_status, nav_status_enum);
+        append_jsonb_enum_field(&state, "maneuver", msg.maneuver, maneuver_enum);
+        append_jsonb_enum_field(&state, "fix_type", msg.fix_type, fix_type_enum);
+        append_jsonb_enum_field(&state, "ship_type", msg.ship_type, ship_type_enum);
     } else {
-        JsonbValue val = {.type = jbvNumeric, .val.numeric = int_to_numeric(msg.nav_status)};
-        pushJsonbValue(&state, WJB_KEY, &((JsonbValue){.type = jbvString, .val.string.val = "nav_status", .val.string.len = 10}));
-        pushJsonbValue(&state, WJB_VALUE, &val);
+        ADD_NUMERIC_FIELD("nav_status", msg.nav_status);
+        ADD_NUMERIC_FIELD("maneuver", msg.maneuver);
+        ADD_NUMERIC_FIELD("fix_type", msg.fix_type);
+        ADD_NUMERIC_FIELD("ship_type", msg.ship_type);
     }
+
+    // Common fields for all formats
+    ADD_NUMERIC_FIELD("type", msg.type);
+    ADD_NUMERIC_FIELD("mmsi", msg.mmsi);
+    ADD_NUMERIC_FIELD("repeat", msg.repeat);
+    ADD_NUMERIC_FIELD("timestamp", msg.timestamp);
+    ADD_NUMERIC_FIELD("radio", msg.radio);
+    ADD_NUMERIC_FIELD("imo", msg.imo);
+    ADD_STRING_FIELD("callsign", msg.callsign);
+    ADD_STRING_FIELD("vessel_name", msg.vessel_name);
+    ADD_STRING_FIELD("destination", msg.destination);
+    ADD_FLOAT_FIELD("lat", msg.lat);
+    ADD_FLOAT_FIELD("lon", msg.lon);
+    ADD_FLOAT_FIELD("speed", msg.speed);
+    ADD_FLOAT_FIELD("heading", msg.heading);
+    ADD_FLOAT_FIELD("course", msg.course);
+    ADD_FLOAT_FIELD("draught", msg.draught);
 
     pushJsonbValue(&state, WJB_END_OBJECT, NULL);
     Jsonb *result = JsonbValueToJsonb(pushJsonbValue(&state, WJB_END_OBJECT, NULL));
@@ -140,14 +192,51 @@ const char* nav_status_enum(int code) {
         case 6: return "Aground";
         case 7: return "Engaged in fishing";
         case 8: return "Under way sailing";
-        case 9: return "Reserved for future use (9)";
-        case 10: return "Reserved for future use (10)";
-        case 11: return "Reserved for future use (11)";
-        case 12: return "Reserved for future use (12)";
-        case 13: return "Reserved for future use (13)";
+        case 9 ... 13: return "Reserved for future use";
         case 14: return "AIS-SART";
         case 15: return "Not defined (default)";
         default: return "Invalid";
+    }
+}
+
+const char* maneuver_enum(int code) {
+    switch (code) {
+        case 0: return "Not available";
+        case 1: return "No special maneuver";
+        case 2: return "Special maneuver";
+        default: return "Invalid";
+    }
+}
+
+const char* fix_type_enum(int code) {
+    switch (code) {
+        case 0: return "Undefined";
+        case 1: return "GPS";
+        case 2: return "GLONASS";
+        case 3: return "Combined GPS/GLONASS";
+        case 4: return "Loran-C";
+        case 5: return "Chayka";
+        case 6: return "Integrated Navigation System";
+        case 7: return "Surveyed";
+        default: return "Invalid";
+    }
+}
+
+const char* ship_type_enum(int code) {
+    switch (code) {
+        case 0: return "Not available (default)";
+        case 30: return "Fishing";
+        case 31: return "Towing";
+        case 32: return "Towing exceeds 200m or wide";
+        case 33: return "Dredging or underwater ops";
+        case 34: return "Diving ops";
+        case 35: return "Military ops";
+        case 36: return "Sailing";
+        case 37: return "Pleasure Craft";
+        case 70: return "Cargo";
+        case 80: return "Tanker";
+        case 90: return "Other type";
+        default: return "Unknown or Reserved";
     }
 }
 

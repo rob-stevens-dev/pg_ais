@@ -68,7 +68,11 @@ typedef struct {
 
 bool parse_ais_sentence(const char *sentence, AISMessage *msg);
 void free_ais_message(AISMessage *msg);
+
 const char* nav_status_enum(int code);
-void free_ais_message(AISMessage *msg);
+const char* nav_status_enum(int code);
+const char* maneuver_enum(int code);
+const char* fix_type_enum(int code);
+const char* ship_type_enum(int code);
 
 #endif /* AIS_CORE_H */
