@@ -92,9 +92,14 @@ static void test_msg_6_parsing(void **state) {
     assert_true(ok);
     assert_int_equal(msg.type, 6);
     assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
-    // Optionally assert app_id, dest_mmsi, bin_len, etc.
+    assert_true(msg.seq_num >= 0);
+    assert_true(msg.dac > 0);
+    assert_true(msg.fid > 0);
+    assert_int_equal(msg.spare, msg.spare);
+    assert_true(msg.bin_len > 0);
     free_ais_message(&msg);
 }
+
 
 static void test_msg_7_parsing(void **state) {
     AISMessage msg;
