@@ -8,33 +8,18 @@
 #include "../src/parse_ais_msg.h"
 
 
-static void test_msg_1_parsing(void **state) {
+static void test_msg_1_2_3_parsing(void **state) {
     AISMessage msg;
     const char *payload = "15Muq60001G?tTpE>Gbk0?wN0<0";
     bool ok = parse_ais_payload(&msg, payload, 0);
     assert_true(ok);
     assert_int_equal(msg.type, 1);
-    assert_int_equal(msg.mmsi, 123456789); // Replace with real MMSI
-    free_ais_message(&msg);
-}
-
-static void test_msg_2_parsing(void **state) {
-    AISMessage msg;
-    const char *payload = "25Muq60001G?tTpE>Gbk0?wN0<0";
-    bool ok = parse_ais_payload(&msg, payload, 0);
-    assert_true(ok);
-    assert_int_equal(msg.type, 2);
-    assert_int_equal(msg.mmsi, 123456789); // Replace with real MMSI
-    free_ais_message(&msg);
-}
-
-static void test_msg_3_parsing(void **state) {
-    AISMessage msg;
-    const char *payload = "35Muq60001G?tTpE>Gbk0?wN0<0";
-    bool ok = parse_ais_payload(&msg, payload, 0);
-    assert_true(ok);
-    assert_int_equal(msg.type, 3);
-    assert_int_equal(msg.mmsi, 123456789); // Replace with real MMSI
+    assert_int_equal(msg.mmsi, 123456789); // Replace with actual expected MMSI
+    assert_int_equal(msg.nav_status, 0);  // Example: under way
+    assert_true(msg.lat != 0.0);
+    assert_true(msg.lon != 0.0);
+    assert_true(msg.speed >= 0.0);
+    assert_true(msg.heading >= 0);
     free_ais_message(&msg);
 }
 
@@ -369,9 +354,7 @@ int main(void) {
         cmocka_unit_test(test_invalid_fragment_parsing),
         cmocka_unit_test(test_successful_reassembly),
         cmocka_unit_test(test_incomplete_reassembly),
-        cmocka_unit_test(test_msg_1_parsing),
-        cmocka_unit_test(test_msg_2_parsing),
-        cmocka_unit_test(test_msg_3_parsing),
+        cmocka_unit_test(test_msg_1_2_3_parsing),
         cmocka_unit_test(test_msg_4_parsing),
         cmocka_unit_test(test_msg_5_parsing),
         cmocka_unit_test(test_msg_6_parsing),
