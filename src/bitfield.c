@@ -1,4 +1,3 @@
-// File: src/bitfield.c
 #include "bitfield.h"
 #include <stdlib.h>
 #include <string.h>

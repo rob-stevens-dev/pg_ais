@@ -1,4 +1,3 @@
-// pg_ais_core.c
 #include "pg_ais.h"
 #include <string.h>
 

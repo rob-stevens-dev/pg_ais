@@ -6,6 +6,7 @@
 
 #define AIS_MAX_SENTENCE_LEN 1024
 
+// Caller must free: callsign, vessel_name, destination, bin_data
 typedef struct {
     int type;
     int mmsi;
@@ -66,13 +67,12 @@ typedef struct {
     char *destination;
 } AISMessage;
 
-bool parse_ais_sentence(const char *sentence, AISMessage *msg);
+bool parse_nmea_sentence(const char *sentence, AISMessage *msg);
 void free_ais_message(AISMessage *msg);
 
-const char* nav_status_enum(int code);
-const char* nav_status_enum(int code);
-const char* maneuver_enum(int code);
-const char* fix_type_enum(int code);
-const char* ship_type_enum(int code);
+const char* ais_nav_status_to_str(int code);
+const char* ais_maneuver_to_str(int code);
+const char* ais_fix_type_to_str(int code);
+const char* ais_ship_type_to_str(int code);
 
-#endif /* AIS_CORE_H */
+#endif

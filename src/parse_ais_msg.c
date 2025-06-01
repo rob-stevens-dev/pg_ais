@@ -1,5 +1,3 @@
-// ------------------------------------------
-// File: src/parse_ais_msg.c
 #include "parse_ais_msg.h"
 #include "bitfield.h"
 #include <string.h>

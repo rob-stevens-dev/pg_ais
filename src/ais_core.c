@@ -1,7 +1,3 @@
-// ais_core.c
-// (Empty placeholder for future AIS processing logic)
-
-// pg_ais.c
 #include "postgres.h"
 #include "fmgr.h"
 #include "utils/builtins.h"
@@ -114,15 +110,17 @@ ais_out(PG_FUNCTION_ARGS) {
 }
 
 
+PG_FUNCTION_INFO_V1(pg_ais_debug);
 Datum
 pg_ais_debug(PG_FUNCTION_ARGS) {
     text *txt = PG_GETARG_TEXT_PP(0);
-    text *fmt = PG_NARGS() > 1 ? PG_GETARG_TEXT_PP(1) : NULL;
+    const char *format = "json";
+
+    if (PG_NARGS() == 2 && !PG_ARGISNULL(1)) {
+        format = text_to_cstring(PG_GETARG_TEXT_PP(1));
+    }
+
     char *input = text_to_cstring(txt);
-    char *format = fmt ? text_to_cstring(fmt) : "json";
-
-    bool format_enum_output = (strcmp(format, "json_enum") == 0);
-
     AISMessage msg;
     if (!parse_ais_from_text(input, &msg)) {
         ereport(ERROR, (errmsg("invalid AIS message")));
@@ -131,38 +129,46 @@ pg_ais_debug(PG_FUNCTION_ARGS) {
     JsonbParseState *state = NULL;
     pushJsonbValue(&state, WJB_BEGIN_OBJECT, NULL);
 
-    if (format_enum_output) {
-        append_jsonb_enum_field(&state, "nav_status", msg.nav_status, nav_status_enum);
-        append_jsonb_enum_field(&state, "maneuver", msg.maneuver, maneuver_enum);
-        append_jsonb_enum_field(&state, "fix_type", msg.fix_type, fix_type_enum);
-        append_jsonb_enum_field(&state, "ship_type", msg.ship_type, ship_type_enum);
+    #define JSONB_BOOL(field, val) \
+        do { \
+            pushJsonbValue(&state, WJB_KEY, &((JsonbValue){.type=JB_STRING, .val.stringVal=field})); \
+            pushJsonbValue(&state, WJB_VALUE, &((JsonbValue){.type=JB_BOOL, .val.boolean=(val != 0)})); \
+        } while(0)
+
+    #define JSONB_INT(field, val) \
+        do { \
+            pushJsonbValue(&state, WJB_KEY, &((JsonbValue){.type=JB_STRING, .val.stringVal=field})); \
+            pushJsonbValue(&state, WJB_VALUE, &((JsonbValue){.type=JB_NUMERIC, .val.numeric=int64_to_numeric(val)})); \
+        } while(0)
+
+    #define JSONB_FLOAT(field, val) \
+        do { \
+            pushJsonbValue(&state, WJB_KEY, &((JsonbValue){.type=JB_STRING, .val.stringVal=field})); \
+            pushJsonbValue(&state, WJB_VALUE, &((JsonbValue){.type=JB_NUMERIC, .val.numeric=float8_to_numeric(val)})); \
+        } while(0)
+
+    JSONB_INT("type", msg.type);
+    JSONB_INT("mmsi", msg.mmsi);
+    JSONB_FLOAT("lat", msg.lat);
+    JSONB_FLOAT("lon", msg.lon);
+    JSONB_FLOAT("speed", msg.speed);
+    JSONB_FLOAT("heading", msg.heading);
+
+    if (strcmp(format, "json_bool") == 0) {
+        JSONB_BOOL("raim", msg.raim);
+        JSONB_BOOL("accuracy", msg.accuracy);
+        JSONB_BOOL("alt_sensor", msg.alt_sensor);
+        JSONB_BOOL("retransmit", msg.retransmit);
     } else {
-        ADD_NUMERIC_FIELD("nav_status", msg.nav_status);
-        ADD_NUMERIC_FIELD("maneuver", msg.maneuver);
-        ADD_NUMERIC_FIELD("fix_type", msg.fix_type);
-        ADD_NUMERIC_FIELD("ship_type", msg.ship_type);
+        JSONB_INT("raim", msg.raim);
+        JSONB_INT("accuracy", msg.accuracy);
+        JSONB_INT("alt_sensor", msg.alt_sensor);
+        JSONB_INT("retransmit", msg.retransmit);
     }
 
-    // Common fields for all formats
-    ADD_NUMERIC_FIELD("type", msg.type);
-    ADD_NUMERIC_FIELD("mmsi", msg.mmsi);
-    ADD_NUMERIC_FIELD("repeat", msg.repeat);
-    ADD_NUMERIC_FIELD("timestamp", msg.timestamp);
-    ADD_NUMERIC_FIELD("radio", msg.radio);
-    ADD_NUMERIC_FIELD("imo", msg.imo);
-    ADD_STRING_FIELD("callsign", msg.callsign);
-    ADD_STRING_FIELD("vessel_name", msg.vessel_name);
-    ADD_STRING_FIELD("destination", msg.destination);
-    ADD_FLOAT_FIELD("lat", msg.lat);
-    ADD_FLOAT_FIELD("lon", msg.lon);
-    ADD_FLOAT_FIELD("speed", msg.speed);
-    ADD_FLOAT_FIELD("heading", msg.heading);
-    ADD_FLOAT_FIELD("course", msg.course);
-    ADD_FLOAT_FIELD("draught", msg.draught);
-
     pushJsonbValue(&state, WJB_END_OBJECT, NULL);
-    Jsonb *result = JsonbValueToJsonb(pushJsonbValue(&state, WJB_END_OBJECT, NULL));
 
+    Jsonb *result = JsonbValueToJsonb(pushJsonbValue(&state, WJB_DONE, NULL));
     free_ais_message(&msg);
     PG_RETURN_JSONB_P(result);
 }
@@ -238,7 +244,8 @@ pg_ais_point(PG_FUNCTION_ARGS) {
     PG_RETURN_POINT_P(point);
 }
 
-
+// WKB currently big-endian; future support for LE should be considered
+// TODO: Add byte-order handling (endianness detection) if needed
 PG_FUNCTION_INFO_V1(pg_ais_point_geom);
 Datum
 pg_ais_point_geom(PG_FUNCTION_ARGS) {
@@ -280,13 +287,17 @@ void free_ais_message(AISMessage *msg) {
         free(msg->vessel_name);
         msg->vessel_name = NULL;
     }
+    if (msg->destination) {
+        free(msg->destination);
+        msg->destination = NULL;
+    }
     if (msg->bin_data) {
         free(msg->bin_data);
         msg->bin_data = NULL;
     }
 }
 
-const char* nav_status_enum(int code) {
+const char* ais_nav_status_to_str(int code) {
     switch (code) {
         case 0: return "Under way using engine";
         case 1: return "At anchor";
@@ -300,20 +311,20 @@ const char* nav_status_enum(int code) {
         case 9 ... 13: return "Reserved for future use";
         case 14: return "AIS-SART";
         case 15: return "Not defined (default)";
-        default: return "Invalid";
+        default: return "Unknown";
     }
 }
 
-const char* maneuver_enum(int code) {
+const char* ais_maneuver_to_str(int code) {
     switch (code) {
         case 0: return "Not available";
         case 1: return "No special maneuver";
         case 2: return "Special maneuver";
-        default: return "Invalid";
+        default: return "Unknown";
     }
 }
 
-const char* fix_type_enum(int code) {
+const char* ais_fix_type_to_str(int code) {
     switch (code) {
         case 0: return "Undefined";
         case 1: return "GPS";
@@ -323,11 +334,11 @@ const char* fix_type_enum(int code) {
         case 5: return "Chayka";
         case 6: return "Integrated Navigation System";
         case 7: return "Surveyed";
-        default: return "Invalid";
+        default: return "Unknown";
     }
 }
 
-const char* ship_type_enum(int code) {
+const char* ais_ship_type_to_str(int code) {
     switch (code) {
         case 0: return "Not available (default)";
         case 30: return "Fishing";

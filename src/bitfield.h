@@ -1,4 +1,3 @@
-// File: src/bitfield.h
 #ifndef BITFIELD_H
 #define BITFIELD_H
 

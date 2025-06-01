@@ -1,10 +1,10 @@
 -- Declare the input/output functions before defining the type
-CREATE FUNCTION ais_in(cstring)
+CREATE OR REPLACE FUNCTION ais_in(cstring)
 RETURNS ais
 AS 'pg_ais', 'ais_in'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION ais_out(ais)
+CREATE OR REPLACE FUNCTION ais_out(ais)
 RETURNS cstring
 AS 'pg_ais', 'ais_out'
 LANGUAGE C IMMUTABLE STRICT;
@@ -18,18 +18,20 @@ CREATE TYPE ais (
 );
 
 -- Functional entrypoint: AIS parsing
-CREATE FUNCTION pg_ais_parse(ais)
+CREATE OR REPLACE FUNCTION pg_ais_parse(ais)
 RETURNS jsonb
 AS 'pg_ais', 'pg_ais_parse'
 LANGUAGE C IMMUTABLE STRICT;
 
--- Debug support
-CREATE FUNCTION pg_ais_debug(text, text DEFAULT 'json') RETURNS jsonb
+-- pg_ais_debug
+CREATE OR REPLACE FUNCTION pg_ais_debug(sentence text, format text DEFAULT 'json')
+RETURNS jsonb
 AS 'MODULE_PATHNAME', 'pg_ais_debug'
 LANGUAGE C STRICT;
 
+
 -- Tabular support
-CREATE FUNCTION pg_ais_fields(text)
+CREATE OR REPLACE FUNCTION pg_ais_fields(text)
 RETURNS TABLE (
     type integer,
     mmsi integer,
@@ -55,12 +57,12 @@ RETURNS TABLE (
 LANGUAGE C STRICT;
 
 -- Extract lon/lat from AIS message.
-CREATE FUNCTION pg_ais_point(text)
+CREATE OR REPLACE FUNCTION pg_ais_point(text)
 RETURNS point
 AS 'MODULE_PATHNAME', 'pg_ais_point'
 LANGUAGE C STRICT;
 
-CREATE FUNCTION pg_ais_point(text)
+CREATE OR REPLACE FUNCTION pg_ais_point(text)
 RETURNS bytea
 AS 'MODULE_PATHNAME', 'pg_ais_point_geom'
 LANGUAGE C STRICT;
