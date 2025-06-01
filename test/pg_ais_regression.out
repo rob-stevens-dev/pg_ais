@@ -27,3 +27,13 @@ CREATE TABLE test_ais (id serial, sentence ais);
 --------------
  
 (1 row)
+
+ id | shipname 
+----+----------
+  1 | SEAWAY
+(1 row)
+
+ should_be_null 
+----------------
+ 
+(1 row)

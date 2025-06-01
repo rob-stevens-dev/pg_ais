@@ -21,3 +21,18 @@ SELECT sentence = sentence FROM test_ais;
 
 -- Debug output test
 SELECT pg_ais_debug(sentence) FROM test_ais;
+
+
+-- Text field extraction testing.
+DROP TABLE IF EXISTS test_text_field;
+CREATE TABLE test_text_field (id serial, sentence ais);
+
+-- Insert a sample AIS message with shipname
+INSERT INTO test_text_field(sentence) VALUES
+('!AIVDM,1,1,,B,H42Owk@2BDPh3@<T4pM00000000,0*6D');
+
+-- Validate access to the shipname field
+SELECT id, pg_ais_get_text_field(sentence, 'shipname') AS shipname FROM test_text_field;
+
+-- Validate access to an unsupported field (expect NULL)
+SELECT pg_ais_get_text_field(sentence, 'foobar') AS should_be_null FROM test_text_field;
