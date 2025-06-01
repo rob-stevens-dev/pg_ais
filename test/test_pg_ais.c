@@ -292,6 +292,11 @@ static void test_msg_21_parsing(void **state) {
     assert_int_equal(msg.type, 21);
     assert_int_equal(msg.mmsi, 123456789);  // Replace with expected MMSI
     assert_non_null(msg.vessel_name);
+    assert_true(strlen(msg.vessel_name) > 0);
+    assert_true(msg.lat != 91.0);
+    assert_true(msg.lon != 181.0);
+    assert_true(msg.dimension_to_bow > 0);
+    assert_true(msg.radio > 0);
     free_ais_message(&msg);
 }
 
