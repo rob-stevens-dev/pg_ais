@@ -27,3 +27,29 @@ LANGUAGE C IMMUTABLE STRICT;
 CREATE FUNCTION pg_ais_debug(text, text DEFAULT 'json') RETURNS jsonb
 AS 'MODULE_PATHNAME', 'pg_ais_debug'
 LANGUAGE C STRICT;
+
+-- Tabular support
+CREATE FUNCTION pg_ais_fields(text)
+RETURNS TABLE (
+    type integer,
+    mmsi integer,
+    nav_status integer,
+    lat double precision,
+    lon double precision,
+    speed double precision,
+    heading double precision,
+    course double precision,
+    timestamp integer,
+    imo integer,
+    callsign text,
+    vessel_name text,
+    ship_type integer,
+    destination text,
+    draught double precision,
+    maneuver integer,
+    fix_type integer,
+    radio integer,
+    repeat integer,
+    raim boolean
+) AS 'MODULE_PATHNAME', 'pg_ais_fields'
+LANGUAGE C STRICT;

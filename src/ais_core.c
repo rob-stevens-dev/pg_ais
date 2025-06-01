@@ -97,6 +97,7 @@ pg_ais_parse(PG_FUNCTION_ARGS) {
     PG_RETURN_DATUM(result);
 }
 
+
 PG_FUNCTION_INFO_V1(ais_in);
 Datum
 ais_in(PG_FUNCTION_ARGS) {
@@ -104,12 +105,14 @@ ais_in(PG_FUNCTION_ARGS) {
     PG_RETURN_POINTER(ais_from_cstring_external(str));
 }
 
+
 PG_FUNCTION_INFO_V1(ais_out);
 Datum
 ais_out(PG_FUNCTION_ARGS) {
     ais *val = (ais *) PG_GETARG_POINTER(0);
     PG_RETURN_CSTRING(ais_to_cstring(val));
 }
+
 
 Datum
 pg_ais_debug(PG_FUNCTION_ARGS) {
@@ -162,6 +165,51 @@ pg_ais_debug(PG_FUNCTION_ARGS) {
 
     free_ais_message(&msg);
     PG_RETURN_JSONB_P(result);
+}
+
+
+PG_FUNCTION_INFO_V1(pg_ais_fields);
+Datum
+pg_ais_fields(PG_FUNCTION_ARGS) {
+    text *txt = PG_GETARG_TEXT_PP(0);
+    char *input = text_to_cstring(txt);
+
+    AISMessage msg;
+    if (!parse_ais_from_text(input, &msg)) {
+        ereport(ERROR, (errmsg("invalid AIS message")));
+    }
+
+    TupleDesc tupdesc;
+    if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+        ereport(ERROR, (errmsg("return type must be a row type")));
+
+    Datum values[20];
+    bool nulls[20] = {false};
+
+    values[0] = Int32GetDatum(msg.type);
+    values[1] = Int32GetDatum(msg.mmsi);
+    values[2] = Int32GetDatum(msg.nav_status);
+    values[3] = Float8GetDatum(msg.lat);
+    values[4] = Float8GetDatum(msg.lon);
+    values[5] = Float8GetDatum(msg.speed);
+    values[6] = Float8GetDatum(msg.heading);
+    values[7] = Float8GetDatum(msg.course);
+    values[8] = Int32GetDatum(msg.timestamp);
+    values[9] = Int32GetDatum(msg.imo);
+    values[10] = CStringGetTextDatum(msg.callsign ? msg.callsign : "");
+    values[11] = CStringGetTextDatum(msg.vessel_name ? msg.vessel_name : "");
+    values[12] = Int32GetDatum(msg.ship_type);
+    values[13] = CStringGetTextDatum(msg.destination ? msg.destination : "");
+    values[14] = Float8GetDatum(msg.draught);
+    values[15] = Int32GetDatum(msg.maneuver);
+    values[16] = Int32GetDatum(msg.fix_type);
+    values[17] = Int32GetDatum(msg.radio);
+    values[18] = Int32GetDatum(msg.repeat);
+    values[19] = BoolGetDatum(msg.raim);
+
+    HeapTuple tuple = heap_form_tuple(tupdesc, values, nulls);
+    free_ais_message(&msg);
+    PG_RETURN_DATUM(HeapTupleGetDatum(tuple));
 }
 
 

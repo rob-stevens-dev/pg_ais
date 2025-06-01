@@ -61,4 +61,7 @@ typedef struct {
 char *ais_to_cstring(const ais *value);
 ais *ais_from_cstring_external(const char *str);
 
+PGDLLEXPORT Datum pg_ais_debug(PG_FUNCTION_ARGS);
+PGDLLEXPORT Datum pg_ais_fields(PG_FUNCTION_ARGS);
+
 #endif /* PG_AIS_H */
