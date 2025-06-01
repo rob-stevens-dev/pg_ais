@@ -244,7 +244,6 @@ bool parse_msg_12(AISMessage *msg, const char *payload) {
     return true;
 }
 
-
 bool parse_msg_13(AISMessage *msg, const char *payload) {
     msg->type = 13;
     msg->repeat = parse_uint(payload, 6, 2);
@@ -256,8 +255,12 @@ bool parse_msg_13(AISMessage *msg, const char *payload) {
     msg->bin_len = bit_len / 6;
     msg->bin_data = parse_string(payload, text_start, bit_len);  // 6-bit ASCII broadcast safety message
 
+    // Validation
+    if (!msg->bin_data || strlen(msg->bin_data) == 0) return false;
+
     return true;
 }
+
 
 bool parse_msg_14(AISMessage *msg, const char *payload) {
     msg->type = 14;
