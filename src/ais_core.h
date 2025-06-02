@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+
 #define AIS_MAX_SENTENCE_LEN 1024
 
 // Caller must free: callsign, vessel_name, destination, bin_data
