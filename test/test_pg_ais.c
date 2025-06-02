@@ -9,6 +9,15 @@
 #include "../src/pg_ais.h"
 #include "../src/parse_ais.h"
 #include "../src/parse_ais_msg.h"
+#include "../src/bitfield.h"
+
+
+const char sixbit_ascii[64] = {
+    '@','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O',
+    'P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','_',
+    ' ','!','\"','#','$','%','&','\'','(',')','*','+',',','-','.','/',
+    '0','1','2','3','4','5','6','7','8','9',':',';','<','=','>','?'
+};
 
 
 static void test_msg_1_2_3_parsing(void **state) {
@@ -598,8 +607,40 @@ static void test_parse_string_utf8_trailing_spaces(void **state) {
 }
 
 
+static void test_parse_uint_bounds_checking(void **state) {
+    uint32_t val;
+
+    assert_false(parse_uint_safe(NULL, 0, 6, &val));                 // null payload
+    assert_false(parse_uint_safe("12", -1, 6, &val));                // negative start
+    assert_false(parse_uint_safe("12", 0, 33, &val));                // len too long
+    assert_false(parse_uint_safe("12", 12, 6, &val));                // past buffer
+    assert_true(parse_uint_safe("15Muq6", 0, 6, &val));              // valid
+}
+
+
+static void test_parse_string_safe(void **state) {
+    (void)state;
+
+    // Valid string case
+    const char *payload = "15Muq6";  // Valid 6-bit ASCII payload
+    char *s = parse_string(payload, 0, 36);  // 6 characters
+    assert_non_null(s);
+    assert_string_not_equal(s, "");
+    free(s);
+
+    // Overflow case
+    s = parse_string("1", 0, 60);  // Too short
+    assert_null(s);
+
+    // Invalid character case (outside ASCII range)
+    s = parse_string("~~~~~~~~", 0, 48);  // Invalid chars
+    assert_null(s);
+}
+
+
 int main(void) {
     const struct CMUnitTest tests[] = {
+        cmocka_unit_test(test_parse_uint_bounds_checking),
         cmocka_unit_test(test_valid_fragment_parsing),
         cmocka_unit_test(test_invalid_fragment_parsing),
         cmocka_unit_test(test_successful_reassembly),
@@ -640,6 +681,7 @@ int main(void) {
         cmocka_unit_test(test_pg_ais_get_bool_field_unsupported),
         cmocka_unit_test(test_parse_string_utf8_basic),
         cmocka_unit_test(test_parse_string_utf8_trailing_spaces),
+        cmocka_unit_test(test_parse_string_safe),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }
