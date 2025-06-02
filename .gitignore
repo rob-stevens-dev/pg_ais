@@ -20,3 +20,7 @@
 # Exception for versioned documentation
 !docs/
 !docs/**
+
+# Exception for benchmarking
+!benchmark/
+!benchmark/**
