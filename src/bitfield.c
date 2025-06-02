@@ -36,14 +36,17 @@ static inline uint8_t sixbit_to_uint(char c) {
  *
  * @return true on success, false if input is invalid or out of bounds
  */
-bool parse_uint_safe(const char *payload, int start, int len, uint32_t *result) {
-    if (!payload || !result || start < 0 || len <= 0 || len > 32) {
-        return false;
+ParseResult parse_uint_safe(const char *payload, int start, int len, uint32_t *result) {
+    if (!payload || !result) {
+        return (ParseResult){ .ok = false, .code = PARSE_ERR_PAYLOAD_NULL, .msg = "Payload or result pointer was NULL" };
+    }
+    if (start < 0 || len <= 0 || len > 32) {
+        return (ParseResult){ .ok = false, .code = PARSE_ERR_INVALID_BITFIELD, .msg = "Invalid bitfield parameters" };
     }
 
     int bit_len = (int)strlen(payload) * 6;
     if ((start + len) > bit_len) {
-        return false;  // would read past end of buffer
+        return (ParseResult){ .ok = false, .code = PARSE_ERR_TOO_SHORT, .msg = "Field exceeds payload bounds" };
     }
 
     uint32_t value = 0;
@@ -53,14 +56,14 @@ bool parse_uint_safe(const char *payload, int start, int len, uint32_t *result) 
         int bit_offset = 5 - (bit_idx % 6);
         char c = payload[byte_idx];
         if (c < 48 || c > 119) {
-            return false;
+            return (ParseResult){ .ok = false, .code = PARSE_ERR_INVALID_BITFIELD, .msg = "Invalid 6-bit character" };
         }
         int bit = ((c - 48) >> bit_offset) & 1;
         value = (value << 1) | bit;
     }
 
     *result = value;
-    return true;
+    return (ParseResult){ .ok = true, .code = PARSE_OK, .msg = NULL };
 }
 
 
@@ -73,33 +76,34 @@ bool parse_uint_safe(const char *payload, int start, int len, uint32_t *result) 
  * @param result  Output parameter for the parsed signed integer
  * @return true if parsing succeeded, false on bounds or input error
  */
-bool parse_int_safe(const char *payload, int start, int len, int32_t *result) {
-    if (!payload || !result || len <= 0 || len > 32 || start < 0) {
-        return false;
+ParseResult parse_int_safe(const char *payload, int start, int len, int32_t *result) {
+    if (!payload || !result) {
+        return (ParseResult){ .ok = false, .code = PARSE_ERR_PAYLOAD_NULL, .msg = "Payload or result pointer was NULL" };
     }
-
+    if (start < 0 || len <= 0 || len > 32) {
+        return (ParseResult){ .ok = false, .code = PARSE_ERR_INVALID_BITFIELD, .msg = "Invalid bitfield parameters" };
+    }
     int bit_len = (int)strlen(payload) * 6;
     if ((start + len) > bit_len) {
-        return false;
+        return (ParseResult){ .ok = false, .code = PARSE_ERR_TOO_SHORT, .msg = "Field exceeds payload bounds" };
     }
-    
     uint32_t val = 0;
     for (int i = 0; i < len; i++) {
         int bit_idx = start + i;
         int byte_idx = bit_idx / 6;
         int bit_offset = 5 - (bit_idx % 6);
         char c = payload[byte_idx];
-        if (c < 48 || c > 119) return false;
+        if (c < 48 || c > 119) {
+            return (ParseResult){ .ok = false, .code = PARSE_ERR_INVALID_BITFIELD, .msg = "Invalid 6-bit character" };
+        }
         int bit = ((c - 48) >> bit_offset) & 1;
         val = (val << 1) | bit;
     }
-    
     if ((val >> (len - 1)) & 1) {
         val |= (~0U << len); // Sign extend
     }
-    
     *result = (int32_t)val;
-    return true;
+    return (ParseResult){ .ok = true, .code = PARSE_OK, .msg = NULL };
 }
 
 
@@ -113,12 +117,15 @@ bool parse_int_safe(const char *payload, int start, int len, int32_t *result) {
  * @param result  Output parameter for float result
  * @return true if parsing succeeded, false otherwise
  */
-bool parse_float_safe(const char *payload, int start, int len, double scale, double *result) {
+ParseResult parse_float_safe(const char *payload, int start, int len, double scale, double *result) {
+    if (!result || scale == 0.0) {
+        return (ParseResult){ .ok = false, .code = PARSE_ERR_INVALID_BITFIELD, .msg = "Invalid result pointer or scale" };
+    }
     int32_t val = 0;
-    if (!result || scale == 0.0) return false;
-    if (!parse_int_safe(payload, start, len, &val)) return false;
+    ParseResult res = parse_int_safe(payload, start, len, &val);
+    if (!res.ok) return res;
     *result = val / scale;
-    return true;
+    return (ParseResult){ .ok = true, .code = PARSE_OK, .msg = NULL };
 }
 
 
@@ -130,12 +137,15 @@ bool parse_float_safe(const char *payload, int start, int len, double scale, dou
  * @param result  Output parameter for boolean result
  * @return true on success, false on invalid input or range
  */
-bool parse_bool_safe(const char *payload, int start, bool *result) {
+ParseResult parse_bool_safe(const char *payload, int start, bool *result) {
+    if (!result) {
+        return (ParseResult){ .ok = false, .code = PARSE_ERR_PAYLOAD_NULL, .msg = "Result pointer is NULL" };
+    }
     uint32_t bit = 0;
-    if (!result) return false;
-    if (!parse_uint_safe(payload, start, 1, &bit)) return false;
+    ParseResult res = parse_uint_safe(payload, start, 1, &bit);
+    if (!res.ok) return res;
     *result = (bit != 0);
-    return true;
+    return (ParseResult){ .ok = true, .code = PARSE_OK, .msg = NULL };
 }
 
 
@@ -146,10 +156,15 @@ bool parse_bool_safe(const char *payload, int start, bool *result) {
  * @param start   Bit offset to begin parsing
  * @return Latitude in decimal degrees, or NAN on error
  */
-double parse_lat(const char *payload, int start) {
+ParseResult parse_lat_safe(const char *payload, int start, double *out) {
+    if (!out) {
+        return (ParseResult){ .ok = false, .code = PARSE_ERR_PAYLOAD_NULL, .msg = "Latitude output pointer is NULL" };
+    }
     int32_t val = 0;
-    if (!parse_int_safe(payload, start, 27, &val)) return NAN;
-    return val / 600000.0;
+    ParseResult res = parse_int_safe(payload, start, 27, &val);
+    if (!res.ok) return res;
+    *out = val / 600000.0;
+    return (ParseResult){ .ok = true, .code = PARSE_OK, .msg = NULL };
 }
 
 
@@ -160,10 +175,15 @@ double parse_lat(const char *payload, int start) {
  * @param start   Bit offset to begin parsing
  * @return Longitude in decimal degrees, or NAN on error
  */
-double parse_lon(const char *payload, int start) {
+ParseResult parse_lon_safe(const char *payload, int start, double *out) {
+    if (!out) {
+        return (ParseResult){ .ok = false, .code = PARSE_ERR_PAYLOAD_NULL, .msg = "Longitude output pointer is NULL" };
+    }
     int32_t val = 0;
-    if (!parse_int_safe(payload, start, 28, &val)) return NAN;
-    return val / 600000.0;
+    ParseResult res = parse_int_safe(payload, start, 28, &val);
+    if (!res.ok) return res;
+    *out = val / 600000.0;
+    return (ParseResult){ .ok = true, .code = PARSE_OK, .msg = NULL };
 }
 
 
@@ -174,11 +194,19 @@ double parse_lon(const char *payload, int start) {
  * @param start   Bit offset
  * @return Speed in knots, or -1.0 if unavailable (1023 encoded)
  */
-double parse_speed(const char *payload, int start) {
+ParseResult parse_speed_safe(const char *payload, int start, double *out) {
+    if (!out) {
+        return (ParseResult){ .ok = false, .code = PARSE_ERR_PAYLOAD_NULL, .msg = "Speed output pointer is NULL" };
+    }
     uint32_t raw = 0;
-    if (!parse_uint_safe(payload, start, 10, &raw)) return -1.0;
-    if (raw == 1023) return -1.0;
-    return raw / 10.0;
+    ParseResult res = parse_uint_safe(payload, start, 10, &raw);
+    if (!res.ok) return res;
+    if (raw == 1023) {
+        *out = -1.0;
+    } else {
+        *out = raw / 10.0;
+    }
+    return (ParseResult){ .ok = true, .code = PARSE_OK, .msg = NULL };
 }
 
 
@@ -189,11 +217,15 @@ double parse_speed(const char *payload, int start) {
  * @param start   Bit offset
  * @return Heading in degrees, or -1.0 if unavailable (511 encoded)
  */
-double parse_heading(const char *payload, int start) {
+ParseResult parse_heading_safe(const char *payload, int start, double *out) {
+    if (!out) {
+        return (ParseResult){ .ok = false, .code = PARSE_ERR_PAYLOAD_NULL, .msg = "Heading output pointer is NULL" };
+    }
     uint32_t raw = 0;
-    if (!parse_uint_safe(payload, start, 9, &raw)) return -1.0;
-    if (raw == 511) return -1.0;
-    return raw;
+    ParseResult res = parse_uint_safe(payload, start, 9, &raw);
+    if (!res.ok) return res;
+    *out = (raw == 511) ? -1.0 : (double)raw;
+    return (ParseResult){ .ok = true, .code = PARSE_OK, .msg = NULL };
 }
 
 
@@ -211,37 +243,41 @@ double parse_heading(const char *payload, int start) {
  * @note This function assumes sixbit_ascii[64] is declared externally.
  *       Trims trailing spaces. Returns NULL on bounds or memory failure.
  */
-char *parse_string(const char *payload, int start, int len) {
-    if (!payload || start < 0 || len <= 0) return NULL;
+ParseResult parse_string_safe(const char *payload, int start, int len, char **out) {
+    if (!payload || !out || start < 0 || len <= 0) {
+        return (ParseResult){ .ok = false, .code = PARSE_ERR_PAYLOAD_NULL, .msg = "Invalid parameters or output pointer is NULL" };
+    }
     int bit_len = (int)strlen(payload) * 6;
-    if ((start + len) > bit_len) return NULL;
+    if ((start + len) > bit_len) {
+        return (ParseResult){ .ok = false, .code = PARSE_ERR_TOO_SHORT, .msg = "String exceeds payload bounds" };
+    }
 
     int byte_len = (len + 5) / 6;
-    char *out = malloc(byte_len + 1);
-    if (!out) return NULL;
+    char *buf = malloc(byte_len + 1);
+    if (!buf) {
+        return (ParseResult){ .ok = false, .code = PARSE_ERR_STRING_DECODE, .msg = "Memory allocation failed" };
+    }
 
     for (int i = 0; i < byte_len; i++) {
         uint32_t sixbit = 0;
-        if (!parse_uint_safe(payload, start + i * 6, 6, &sixbit)) {
-            free(out);
-            return NULL;
+        ParseResult res = parse_uint_safe(payload, start + i * 6, 6, &sixbit);
+        if (!res.ok || sixbit > 63) {
+            free(buf);
+            return (ParseResult){ .ok = false, .code = PARSE_ERR_STRING_DECODE, .msg = "Invalid 6-bit character in string" };
         }
-        if (sixbit > 63) {
-            free(out);
-            return NULL;
-        }
-        out[i] = (sixbit == 0) ? ' ' : sixbit_ascii[sixbit];
+        buf[i] = (sixbit == 0) ? ' ' : sixbit_ascii[sixbit];
     }
-    out[byte_len] = '\0';
+    buf[byte_len] = '\0';
 
     // Trim trailing spaces
     for (int i = byte_len - 1; i >= 0; i--) {
-        if (out[i] == ' ') {
-            out[i] = '\0';
+        if (buf[i] == ' ') {
+            buf[i] = '\0';
         } else {
             break;
         }
     }
 
-    return out;
+    *out = buf;
+    return (ParseResult){ .ok = true, .code = PARSE_OK, .msg = NULL };
 }
