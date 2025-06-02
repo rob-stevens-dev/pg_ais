@@ -61,3 +61,17 @@ target_include_directories(pg_ais_tests PRIVATE ${PostgreSQL_INCLUDE_DIRS})
 target_link_libraries(pg_ais_tests cmocka)
 
 add_test(NAME pg_ais_tests COMMAND pg_ais_tests)
+
+# Optional test payloads (auto-generated)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/auto_test_payloads.c")
+    add_executable(auto_payload_tests
+        test/auto_test_payloads.c
+        src/parse_ais.c
+        src/parse_ais_msg.c
+        src/bitfield.c
+        src/shared_ais_utils.c
+    )
+    target_compile_definitions(auto_payload_tests PRIVATE UNIT_TEST)
+    target_link_libraries(auto_payload_tests cmocka)
+    add_test(NAME auto_payload_tests COMMAND auto_payload_tests)
+endif()

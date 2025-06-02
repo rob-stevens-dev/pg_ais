@@ -17,6 +17,16 @@ static const char sixbit_ascii[64] = {
 };
 
 
+/**
+ * @brief Parse a single !AIVDM fragment into its components
+ *
+ * Splits a raw NMEA 0183 sentence (typically !AIVDM) into its components and stores them
+ * in a lightweight AISFragment structure. Does not validate checksum or perform deep parsing.
+ *
+ * @param sentence Full NMEA sentence (e.g., "!AIVDM,1,1,,A,...*hh")
+ * @param frag Output structure (caller must call free_buffer() or manage payload/raw)
+ * @return true on success, false if malformed
+ */
 bool parse_ais_fragment(const char *sentence, AISFragment *frag) {
     if (!sentence || strncmp(sentence, "!AIVDM", 6) != 0)
         return false;
@@ -49,6 +59,16 @@ bool parse_ais_fragment(const char *sentence, AISFragment *frag) {
 }
 
 
+/**
+ * @brief Reassemble multipart AIS message fragments into one message
+ *
+ * Joins payloads from a buffer of AISFragment parts and emits a synthesized AISMessage.
+ * For now, this is stubbed and returns a fake fixed value once all parts are present.
+ *
+ * @param buffer Fragment buffer with parts
+ * @param msg_out Output parsed AISMessage
+ * @return true if reassembly was successful
+ */
 bool try_reassemble(AISFragmentBuffer *buffer, AISMessage *msg_out) {
     if (!buffer || !buffer->parts[0]) return false;
 
@@ -75,6 +95,13 @@ bool try_reassemble(AISFragmentBuffer *buffer, AISMessage *msg_out) {
 }
 
 
+/**
+ * @brief Release memory and reset fragment buffer to empty state
+ *
+ * Frees all parts and clears the buffer. Safe to call on already-empty buffer.
+ *
+ * @param buffer Buffer to reset
+ */
 void reset_buffer(AISFragmentBuffer *buffer) {
     for (int i = 0; i < MAX_PARTS; i++) {
         if (buffer->parts[i]) {
@@ -88,26 +115,39 @@ void reset_buffer(AISFragmentBuffer *buffer) {
 }
 
 
-/* Optional UTF-8 string parser */
+/**
+ * @brief Decode a 6-bit ASCII field from an AIS payload into a UTF-8 string
+ *
+ * Converts a string of 6-bit encoded characters into a readable string using the
+ * ITU-R M.1371-5 character set. Trailing spaces are trimmed.
+ *
+ * @param payload AIS 6-bit ASCII payload
+ * @param start Bit offset to begin decoding
+ * @param bitlen Number of bits to read (must be multiple of 6)
+ * @return Newly allocated string (caller must free), or NULL on error
+ */
 char *parse_string_utf8(const char *payload, int start, int bitlen) {
+    if (!payload || start < 0 || bitlen <= 0 || (bitlen % 6 != 0)) return NULL;
     int charlen = bitlen / 6;
+    int bitlen_total = (int)strlen(payload) * 6;
+    if ((start + bitlen) > bitlen_total) return NULL;
+
     char *str = calloc(charlen + 1, 1);
     if (!str) return NULL;
 
     for (int i = 0; i < charlen; i++) {
-        int sixbit = 0;
-        for (int j = 0; j < 6; j++) {
-            int bit = start + i * 6 + j;
-            char c = payload[bit / 6];
-            int val = (c >= '0' && c <= 'W') ? (c - '0') : 0;
-            sixbit <<= 1;
-            sixbit |= (val >> (5 - (bit % 6))) & 0x01;
+        uint32_t sixbit = 0;
+        if (!parse_uint_safe(payload, start + i * 6, 6, &sixbit)) {
+            free(str);
+            return NULL;
         }
-        char decoded = sixbit_ascii[sixbit & 0x3F];
-        str[i] = (decoded == '@') ? ' ' : decoded;
+        if (sixbit > 63) {
+            free(str);
+            return NULL;
+        }
+        str[i] = (sixbit == 0) ? ' ' : sixbit_ascii[sixbit];
     }
 
-    // Trim trailing whitespace
     for (int i = charlen - 1; i >= 0; i--) {
         if (str[i] == ' ') {
             str[i] = '\0';
