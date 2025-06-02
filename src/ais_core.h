@@ -7,7 +7,7 @@
 
 #define AIS_MAX_SENTENCE_LEN 1024
 
-// Caller must free: callsign, vessel_name, destination, bin_data
+
 /**
  * @brief Decoded representation of a full AIS message
  *
@@ -76,27 +76,11 @@ typedef struct {
 
 
 /**
- * @brief Parse a full NMEA AIS sentence into an AISMessage struct
+ * @brief Free heap-allocated components of an AISMessage struct
  *
- * This function extracts relevant fields from a validated NMEA sentence
- * and populates the AISMessage structure with type, location, navigation,
- * and voyage data.
+ * Releases memory from dynamic fields (callsign, vessel_name, destination, bin_data).
  *
- * @param sentence The full AIS NMEA sentence (e.g. !AIVDM...)
- * @param msg Pointer to an AISMessage to populate
- * @return true on success, false on failure or unsupported message type
- */
-bool parse_nmea_sentence(const char *sentence, AISMessage *msg);
-
-
-/**
- * @brief Free dynamic fields allocated within an AISMessage
- *
- * Frees all pointer-based subfields of an AISMessage structure,
- * including callsign, vessel_name, destination, and bin_data.
- * Does not free the AISMessage struct itself.
- *
- * @param msg Pointer to AISMessage whose contents will be freed
+ * @param msg Pointer to AISMessage with heap fields to release
  */
 void free_ais_message(AISMessage *msg);
 
@@ -104,17 +88,19 @@ void free_ais_message(AISMessage *msg);
 /**
  * @brief Convert navigation status code to descriptive string
  *
- * @param code Integer navigation status code (0–15)
- * @return Static string description (e.g. "At anchor") or "Unknown"
+ * Maps 0–15 navigation status codes to human-readable labels.
+ *
+ * @param code Navigation status integer code
+ * @return Constant string label or "Unknown"
  */
 const char* ais_nav_status_to_str(int code);
 
 
 /**
- * @brief Convert maneuver indicator to descriptive string
+ * @brief Convert maneuver indicator code to descriptive string
  *
- * @param code Integer maneuver code (0–2)
- * @return Static string like "Not available", "No special maneuver"
+ * @param code Integer value (0–2)
+ * @return Static description string or "Unknown"
  */
 const char* ais_maneuver_to_str(int code);
 
@@ -122,18 +108,37 @@ const char* ais_maneuver_to_str(int code);
 /**
  * @brief Convert GPS fix type code to readable string
  *
- * @param code Fix type integer code
- * @return Static string such as "GPS", "GLONASS", or "Unknown"
+ * @param code Fix type numeric value
+ * @return Descriptive label (e.g. "GPS", "GLONASS")
  */
 const char* ais_fix_type_to_str(int code);
 
 
 /**
- * @brief Convert ship type code to vessel class description
+ * @brief Convert ship type numeric code to vessel class string
  *
- * @param code Integer ship type code (ITU-R M.1371 Annex B)
- * @return Static string like "Cargo", "Tanker", or "Unknown"
+ * Uses ITU-R M.1371 Annex B codes.
+ *
+ * @param code Ship type numeric code
+ * @return Descriptive string like "Tanker" or "Cargo"
  */
 const char* ais_ship_type_to_str(int code);
+
+
+/**
+ * @brief Append a JSONB object field with an enum value and its label.
+ *
+ * Adds a key to the current JSONB object being built, storing both the raw integer
+ * code and the corresponding human-readable label from an enum converter.
+ *
+ * Example:
+ *   "nav_status": { "code": 5, "label": "Moored" }
+ *
+ * @param state     Pointer to the JSONB parse state
+ * @param key       Field name to add to the object
+ * @param value     Enum value to encode
+ * @param enum_func Function to convert value to label
+ */
+void append_jsonb_enum_field(JsonbParseState **state, const char *key, int value, const char *(*enum_func)(int));
 
 #endif

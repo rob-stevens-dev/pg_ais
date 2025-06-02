@@ -1,7 +1,6 @@
 #include "pg_ais.h"
 #include <string.h>
 
-
 /**
  * @brief Wrap a raw AIS NMEA sentence as a PostgreSQL varlena value
  *
@@ -30,6 +29,7 @@ ais *ais_from_cstring_external(const char *str) {
  * @return Null-terminated string (caller must free), or NULL on failure
  */
 char *ais_to_cstring(const ais *val) {
+    if (!val || VARSIZE(val) <= VARHDRSZ) return NULL;
     size_t len = VARSIZE(val) - VARHDRSZ;
     char *out = (char *) AIS_ALLOC(len + 1);
     if (!out) return NULL;

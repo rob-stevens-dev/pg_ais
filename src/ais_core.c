@@ -10,9 +10,18 @@
 
 PG_MODULE_MAGIC;
 
+
 static AISFragmentBuffer frag_buffer;
 
 
+/**
+ * @brief Append a numeric field to a JSONB object.
+ *
+ * Encodes an integer or long value into a JSONB object under the given key.
+ *
+ * @param key   Field name to emit
+ * @param val   Numeric value to encode
+ */
 #define ADD_NUMERIC_FIELD(key, valexpr) \
     do { \
         JsonbValue _v = {.type = jbvNumeric}; \
@@ -21,6 +30,15 @@ static AISFragmentBuffer frag_buffer;
         pushJsonbValue(&state, WJB_VALUE, &_v); \
     } while(0)
 
+
+/**
+ * @brief Append a floating-point field to a JSONB object.
+ *
+ * Emits a key-value pair where the value is a double precision number.
+ *
+ * @param key   Field name
+ * @param val   Float or double value
+ */
 #define ADD_FLOAT_FIELD(key, valexpr) \
     do { \
         char _buf[32]; \
@@ -32,6 +50,15 @@ static AISFragmentBuffer frag_buffer;
         pushJsonbValue(&state, WJB_VALUE, &_v); \
     } while(0)
 
+
+/**
+ * @brief Append a string field to a JSONB object.
+ *
+ * Inserts a UTF-8 string under the specified key. Skips null values.
+ *
+ * @param key   Key name
+ * @param val   String to store (nullable)
+ */
 #define ADD_STRING_FIELD(key, valexpr) \
     do { \
         if (valexpr) { \
@@ -44,6 +71,16 @@ static AISFragmentBuffer frag_buffer;
     } while(0)
 
 
+/**
+ * @brief Parse a varlena-encoded AIS value into an AISMessage struct.
+ *
+ * This function acts as a shared backend for all pg_ais_get_*_field functions.
+ * It unpacks the input, validates it, and populates an in-memory AISMessage.
+ *
+ * @param ais_input Pointer to PostgreSQL 'ais' type (varlena)
+ * @param msg_out   Output struct to populate (caller must free fields)
+ * @return ParseResult indicating parse status
+ */
 PG_FUNCTION_INFO_V1(pg_ais_parse);
 Datum
 pg_ais_parse(PG_FUNCTION_ARGS) {
@@ -94,6 +131,14 @@ pg_ais_parse(PG_FUNCTION_ARGS) {
 }
 
 
+/**
+ * @brief Input function for the custom 'ais' PostgreSQL type.
+ *
+ * Accepts a C-string representing an AIS sentence and wraps it as varlena.
+ *
+ * @param str C-string input from SQL
+ * @return ais* PostgreSQL varlena datum
+ */
 PG_FUNCTION_INFO_V1(ais_in);
 Datum
 ais_in(PG_FUNCTION_ARGS) {
@@ -102,6 +147,15 @@ ais_in(PG_FUNCTION_ARGS) {
 }
 
 
+/**
+ * @brief Output function for the custom 'ais' PostgreSQL type.
+ *
+ * Converts the varlena-wrapped AIS sentence back to a null-terminated C-string
+ * for display or external serialization.
+ *
+ * @param val Internal ais datum (varlena)
+ * @return C-string output (PostgreSQL palloc'd)
+ */
 PG_FUNCTION_INFO_V1(ais_out);
 Datum
 ais_out(PG_FUNCTION_ARGS) {
@@ -110,6 +164,11 @@ ais_out(PG_FUNCTION_ARGS) {
 }
 
 
+/**
+ * @brief Return a debug JSONB object containing all parsed fields
+ *
+ * Usage: SELECT pg_ais_debug(sentence);
+ */
 PG_FUNCTION_INFO_V1(pg_ais_debug);
 Datum
 pg_ais_debug(PG_FUNCTION_ARGS) {
@@ -174,6 +233,11 @@ pg_ais_debug(PG_FUNCTION_ARGS) {
 }
 
 
+/**
+ * @brief Return a set of named fields for a given AIS message
+ *
+ * This is a set-returning function (SRF) that returns key/value pairs.
+ */
 PG_FUNCTION_INFO_V1(pg_ais_fields);
 Datum
 pg_ais_fields(PG_FUNCTION_ARGS) {
@@ -219,6 +283,9 @@ pg_ais_fields(PG_FUNCTION_ARGS) {
 }
 
 
+/**
+ * @brief Alias for pg_ais_point() for PostGIS geometry
+ */
 PG_FUNCTION_INFO_V1(pg_ais_point);
 Datum
 pg_ais_point(PG_FUNCTION_ARGS) {
@@ -242,8 +309,12 @@ pg_ais_point(PG_FUNCTION_ARGS) {
     PG_RETURN_POINT_P(point);
 }
 
+
 // WKB currently big-endian; future support for LE should be considered
 // TODO: Add byte-order handling (endianness detection) if needed
+/**
+ * @brief Alias for pg_ais_point() for PostGIS geometry
+ */
 PG_FUNCTION_INFO_V1(pg_ais_point_geom);
 Datum
 pg_ais_point_geom(PG_FUNCTION_ARGS) {
@@ -275,6 +346,11 @@ pg_ais_point_geom(PG_FUNCTION_ARGS) {
 }
 
 
+/**
+ * @brief Return the specified string field from an AIS message
+ *
+ * Usage: pg_ais_get_text_field(sentence, 'shipname')
+ */
 PG_FUNCTION_INFO_V1(pg_ais_get_text_field);
 Datum
 pg_ais_get_text_field(PG_FUNCTION_ARGS)
@@ -298,6 +374,11 @@ pg_ais_get_text_field(PG_FUNCTION_ARGS)
 }
 
 
+/**
+ * @brief Return the specified integer field from an AIS message
+ *
+ * Usage: pg_ais_get_int_field(sentence, 'mmsi')
+ */
 PG_FUNCTION_INFO_V1(pg_ais_get_int_field);
 Datum
 pg_ais_get_int_field(PG_FUNCTION_ARGS) {
@@ -324,6 +405,11 @@ pg_ais_get_int_field(PG_FUNCTION_ARGS) {
 }
 
 
+/**
+ * @brief Return the specified floating point field from an AIS message
+ *
+ * Usage: pg_ais_get_float_field(sentence, 'speed')
+ */
 PG_FUNCTION_INFO_V1(pg_ais_get_float_field);
 Datum
 pg_ais_get_float_field(PG_FUNCTION_ARGS) {
@@ -346,6 +432,11 @@ pg_ais_get_float_field(PG_FUNCTION_ARGS) {
 }
 
 
+/**
+ * @brief Return the specified boolean field from an AIS message
+ *
+ * Usage: pg_ais_get_bool_field(sentence, 'raim')
+ */
 PG_FUNCTION_INFO_V1(pg_ais_get_bool_field);
 Datum
 pg_ais_get_bool_field(PG_FUNCTION_ARGS) {
@@ -371,6 +462,15 @@ pg_ais_get_bool_field(PG_FUNCTION_ARGS) {
 
 
 /* Internal utility functions. */
+
+
+/**
+ * @brief Free heap-allocated components of an AISMessage struct
+ *
+ * Releases memory from dynamic fields (callsign, vessel_name, destination, bin_data).
+ *
+ * @param msg Pointer to AISMessage with heap fields to release
+ */
 void free_ais_message(AISMessage *msg) {
     if (msg->callsign) {
         free(msg->callsign);
@@ -390,65 +490,87 @@ void free_ais_message(AISMessage *msg) {
     }
 }
 
+
+/**
+ * @brief Convert navigation status code to descriptive string
+ *
+ * Maps 0–15 navigation status codes to human-readable labels.
+ *
+ * @param code Navigation status integer code
+ * @return Constant string label or "Unknown"
+ */
 const char* ais_nav_status_to_str(int code) {
-    switch (code) {
-        case 0: return "Under way using engine";
-        case 1: return "At anchor";
-        case 2: return "Not under command";
-        case 3: return "Restricted maneuverability";
-        case 4: return "Constrained by her draught";
-        case 5: return "Moored";
-        case 6: return "Aground";
-        case 7: return "Engaged in fishing";
-        case 8: return "Under way sailing";
-        case 9 ... 13: return "Reserved for future use";
-        case 14: return "AIS-SART";
-        case 15: return "Not defined (default)";
-        default: return "Unknown";
-    }
+    static const char *labels[] = {
+        "Under way using engine", "At anchor", "Not under command", "Restricted manoeuverability",
+        "Constrained by her draught", "Moored", "Aground", "Engaged in Fishing",
+        "Under way sailing", "Reserved for future use", "Reserved for future use",
+        "Power-driven vessel towing astern", "Power-driven vessel pushing ahead",
+        "Power-driven vessel pushing ahead or towing alongside", "Reserved for future use", "Not defined"
+    };
+    return (code >= 0 && code <= 15) ? labels[code] : "Unknown";
 }
 
+
+/**
+ * @brief Convert maneuver indicator code to descriptive string
+ *
+ * @param code Integer value (0–2)
+ * @return Static description string or "Unknown"
+ */
 const char* ais_maneuver_to_str(int code) {
-    switch (code) {
-        case 0: return "Not available";
-        case 1: return "No special maneuver";
-        case 2: return "Special maneuver";
-        default: return "Unknown";
-    }
+    static const char *labels[] = {
+        "Not available", "No special maneuver", "Special maneuver"
+    };
+    return (code >= 0 && code <= 2) ? labels[code] : "Unknown";
 }
 
+
+/**
+ * @brief Convert GPS fix type code to readable string
+ *
+ * @param code Fix type numeric value
+ * @return Descriptive label (e.g. "GPS", "GLONASS")
+ */
 const char* ais_fix_type_to_str(int code) {
-    switch (code) {
-        case 0: return "Undefined";
-        case 1: return "GPS";
-        case 2: return "GLONASS";
-        case 3: return "Combined GPS/GLONASS";
-        case 4: return "Loran-C";
-        case 5: return "Chayka";
-        case 6: return "Integrated Navigation System";
-        case 7: return "Surveyed";
-        default: return "Unknown";
-    }
+    static const char *labels[] = {
+        "Undefined", "GPS", "GLONASS", "Combined GPS/GLONASS", "Loran-C", "Chayka",
+        "Integrated navigation system", "Surveyed", "Galileo", "Reserved", "Other"
+    };
+    return (code >= 0 && code <= 10) ? labels[code] : "Unknown";
 }
 
-const char* ais_ship_type_to_str(int code) {
-    switch (code) {
-        case 0: return "Not available (default)";
-        case 30: return "Fishing";
-        case 31: return "Towing";
-        case 32: return "Towing exceeds 200m or wide";
-        case 33: return "Dredging or underwater ops";
-        case 34: return "Diving ops";
-        case 35: return "Military ops";
-        case 36: return "Sailing";
-        case 37: return "Pleasure Craft";
-        case 70: return "Cargo";
-        case 80: return "Tanker";
-        case 90: return "Other type";
-        default: return "Unknown or Reserved";
-    }
+
+/**
+ * @brief Convert ship type numeric code to vessel class string
+ *
+ * Uses ITU-R M.1371 Annex B codes.
+ *
+ * @param code Ship type numeric code
+ * @return Descriptive string like "Tanker" or "Cargo"
+ */
+onst char* ais_ship_type_to_str(int code) {
+    if (code >= 60 && code <= 69) return "Passenger";
+    if (code >= 70 && code <= 79) return "Cargo";
+    if (code >= 80 && code <= 89) return "Tanker";
+    if (code >= 90 && code <= 99) return "Other";
+    return "Unknown";
 }
 
+
+/**
+ * @brief Append a JSONB object field with an enum value and its label.
+ *
+ * Adds a key to the current JSONB object being built, storing both the raw integer
+ * code and the corresponding human-readable label from an enum converter.
+ *
+ * Example:
+ *   "nav_status": { "code": 5, "label": "Moored" }
+ *
+ * @param state     Pointer to the JSONB parse state
+ * @param key       Field name to add to the object
+ * @param value     Enum value to encode
+ * @param enum_func Function to convert value to label
+ */
 static void append_jsonb_enum_field(JsonbParseState **state, const char *key, int value, const char *(*enum_func)(int)) {
     pushJsonbValue(state, WJB_KEY, &((JsonbValue){.type = jbvString, .val.string.val = (char *)key, .val.string.len = strlen(key)}));
     pushJsonbValue(state, WJB_BEGIN_OBJECT, NULL);

@@ -1,5 +1,5 @@
-// parse_ais.c
 #include "pg_ais.h"
+#include "parse_ais.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -27,9 +27,9 @@ static const char sixbit_ascii[64] = {
  * @param frag Output structure (caller must call free_buffer() or manage payload/raw)
  * @return true on success, false if malformed
  */
-bool parse_ais_fragment(const char *sentence, AISFragment *frag) {
+ParseResult parse_ais_fragment(const char *sentence, AISFragment *frag) {
     if (!sentence || strncmp(sentence, "!AIVDM", 6) != 0)
-        return false;
+        return PARSE_ERROR;
 
     char copy[512];
     strncpy(copy, sentence, sizeof(copy));
@@ -43,7 +43,7 @@ bool parse_ais_fragment(const char *sentence, AISFragment *frag) {
         tok = strtok(NULL, ",*");
     }
 
-    if (i < 7) return false;
+    if (i < 7) return PARSE_ERROR;
 
     frag->total = atoi(tokens[1]);
     frag->seq = atoi(tokens[2]);
@@ -55,7 +55,7 @@ bool parse_ais_fragment(const char *sentence, AISFragment *frag) {
     frag->fill_bits = atoi(tokens[6]);
     frag->raw = AIS_STRDUP(sentence);
 
-    return true;
+    return PARSE_OK;
 }
 
 
@@ -69,30 +69,26 @@ bool parse_ais_fragment(const char *sentence, AISFragment *frag) {
  * @param msg_out Output parsed AISMessage
  * @return true if reassembly was successful
  */
-bool try_reassemble(AISFragmentBuffer *buffer, AISMessage *msg_out) {
-    if (!buffer || !buffer->parts[0]) return false;
+ParseResult try_reassemble(AISFragmentBuffer *buffer, AISMessage *msg_out) {
+    if (!buffer || !buffer->parts[0]) return PARSE_ERROR;
 
     int total = buffer->parts[0]->total;
-    if (buffer->received < total) return false;
+    if (buffer->received < total) return PARSE_INCOMPLETE;
 
     for (int i = 0; i < total; i++) {
-        if (!buffer->parts[i]) return false;
+        if (!buffer->parts[i]) return PARSE_INCOMPLETE;
     }
 
-    // Simulate payload join
     char full_payload[1024] = {0};
+    int fill_bits = buffer->parts[total - 1]->fill_bits;
+
     for (int i = 0; i < total; i++) {
-        strcat(full_payload, buffer->parts[i]->payload);
+        strncat(full_payload, buffer->parts[i]->payload, sizeof(full_payload) - strlen(full_payload) - 1);
     }
 
-    msg_out->type = 1;
-    msg_out->mmsi = 123456789;
-    msg_out->lat = 42.123456;
-    msg_out->lon = -70.654321;
-    msg_out->speed = 14.2;
-    msg_out->heading = 82.5;
-    return true;
+    return parse_ais_payload(msg_out, full_payload, fill_bits);
 }
+
 
 
 /**
@@ -124,26 +120,27 @@ void reset_buffer(AISFragmentBuffer *buffer) {
  * @param payload AIS 6-bit ASCII payload
  * @param start Bit offset to begin decoding
  * @param bitlen Number of bits to read (must be multiple of 6)
- * @return Newly allocated string (caller must free), or NULL on error
+ * @param out Pointer to store allocated string on success
+ * @return ParseResult indicating success or failure
  */
-char *parse_string_utf8(const char *payload, int start, int bitlen) {
-    if (!payload || start < 0 || bitlen <= 0 || (bitlen % 6 != 0)) return NULL;
+ParseResult parse_string_utf8(const char *payload, int start, int bitlen, char **out) {
+    if (!payload || start < 0 || bitlen <= 0 || (bitlen % 6 != 0)) return PARSE_ERROR;
     int charlen = bitlen / 6;
     int bitlen_total = (int)strlen(payload) * 6;
-    if ((start + bitlen) > bitlen_total) return NULL;
+    if ((start + bitlen) > bitlen_total) return PARSE_ERROR;
 
     char *str = calloc(charlen + 1, 1);
-    if (!str) return NULL;
+    if (!str) return PARSE_ERROR;
 
     for (int i = 0; i < charlen; i++) {
         uint32_t sixbit = 0;
         if (!parse_uint_safe(payload, start + i * 6, 6, &sixbit)) {
             free(str);
-            return NULL;
+            return PARSE_ERROR;
         }
         if (sixbit > 63) {
             free(str);
-            return NULL;
+            return PARSE_ERROR;
         }
         str[i] = (sixbit == 0) ? ' ' : sixbit_ascii[sixbit];
     }
@@ -156,5 +153,6 @@ char *parse_string_utf8(const char *payload, int start, int bitlen) {
         }
     }
 
-    return str;
+    *out = str;
+    return PARSE_OK;
 }

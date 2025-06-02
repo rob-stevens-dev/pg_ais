@@ -4,8 +4,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "pg_ais.h"
+#include "parse_ais_result.h"
+
 
 #define MAX_PARTS 5
+
 
 /**
  * @brief Parse a single !AIVDM fragment into its components
@@ -15,9 +18,9 @@
  *
  * @param sentence Full NMEA sentence (e.g., "!AIVDM,1,1,,A,...*hh")
  * @param frag Output structure (caller must call free_buffer() or manage payload/raw)
- * @return true on success, false if malformed
+ * @return ParseResult indicating success or reason for failure
  */
-bool parse_ais_fragment(const char *sentence, AISFragment *frag);
+ParseResult parse_ais_fragment(const char *sentence, AISFragment *frag);
 
 
 /**
@@ -29,22 +32,23 @@ bool parse_ais_fragment(const char *sentence, AISFragment *frag);
  * @param payload AIS 6-bit ASCII payload
  * @param start Bit offset to begin decoding
  * @param bitlen Number of bits to read (must be multiple of 6)
- * @return Newly allocated string (caller must free), or NULL on error
+ * @param out Pointer to store allocated string on success
+ * @return ParseResult indicating success or failure
  */
-char *parse_string_utf8(const char *payload, int start, int bitlen);
+ParseResult parse_string_utf8(const char *payload, int start, int bitlen, char **out);
 
 
 /**
  * @brief Reassemble multipart AIS message fragments into one message
  *
- * Joins payloads from a buffer of AISFragment parts and emits a synthesized AISMessage.
- * For now, this is stubbed and returns a fake fixed value once all parts are present.
+ * Joins payloads from a buffer of AISFragment parts and emits a synthesized AISMessage
+ * by dispatching to parse_ais_payload().
  *
  * @param buffer Fragment buffer with parts
  * @param msg_out Output parsed AISMessage
- * @return true if reassembly was successful
+ * @return ParseResult containing success/failure and type
  */
-bool try_reassemble(AISFragmentBuffer *buffer, AISMessage *msg_out);
+ParseResult try_reassemble(AISFragmentBuffer *buffer, AISMessage *msg_out);
 
 
 /**
@@ -66,5 +70,6 @@ void reset_buffer(AISFragmentBuffer *buffer);
  * @param buffer Pointer to the dynamically allocated buffer
  */
 void free_buffer(AISFragmentBuffer *buffer);
+
 
 #endif
