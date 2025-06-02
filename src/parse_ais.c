@@ -63,11 +63,11 @@ ParseResult parse_ais_fragment(const char *sentence, AISFragment *frag) {
  * @brief Reassemble multipart AIS message fragments into one message
  *
  * Joins payloads from a buffer of AISFragment parts and emits a synthesized AISMessage.
- * For now, this is stubbed and returns a fake fixed value once all parts are present.
+ * Tracks parse success using pg_ais_record_parse_result.
  *
  * @param buffer Fragment buffer with parts
  * @param msg_out Output parsed AISMessage
- * @return true if reassembly was successful
+ * @return ParseResult indicating success or reason for failure
  */
 ParseResult try_reassemble(AISFragmentBuffer *buffer, AISMessage *msg_out) {
     if (!buffer || !buffer->parts[0]) return PARSE_ERROR;
@@ -86,9 +86,11 @@ ParseResult try_reassemble(AISFragmentBuffer *buffer, AISMessage *msg_out) {
         strncat(full_payload, buffer->parts[i]->payload, sizeof(full_payload) - strlen(full_payload) - 1);
     }
 
-    return parse_ais_payload(msg_out, full_payload, fill_bits);
+    ParseResult result = parse_ais_payload(msg_out, full_payload, fill_bits);
+    pg_ais_record_parse_result(result == PARSE_OK);
+    pg_ais_record_reassembly_attempt(result == PARSE_OK);
+    return result;
 }
-
 
 
 /**

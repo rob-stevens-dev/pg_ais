@@ -86,3 +86,19 @@ CREATE OR REPLACE FUNCTION pg_ais_get_bool_field(sentence ais, fieldname text)
 RETURNS boolean
 AS 'MODULE_PATHNAME', 'pg_ais_get_bool_field'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+
+CREATE FUNCTION pg_ais_metrics()
+RETURNS TABLE (
+    total_messages_parsed BIGINT,
+    total_parse_failures BIGINT,
+    total_reassembly_attempts BIGINT,
+    total_reassembly_success BIGINT
+)
+AS 'pg_ais', 'pg_ais_metrics'
+LANGUAGE C STABLE;
+
+CREATE FUNCTION pg_ais_reset_metrics()
+RETURNS void
+AS 'pg_ais', 'pg_ais_reset_metrics'
+LANGUAGE C VOLATILE;

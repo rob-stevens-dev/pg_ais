@@ -110,3 +110,21 @@ CREATE TABLE test_ais (id serial, sentence ais);
 ------------------------
  
 (1 row)
+
+SELECT * FROM pg_ais_metrics();
+ total_messages_parsed | total_parse_failures | total_reassembly_attempts | total_reassembly_success 
+------------------------+----------------------+-----------------------------+---------------------------
+                      0 |                    0 |                           0 |                         0
+(1 row)
+
+SELECT pg_ais_reset_metrics();
+ pg_ais_reset_metrics 
+-----------------------
+ 
+(1 row)
+
+SELECT * FROM pg_ais_metrics();
+ total_messages_parsed | total_parse_failures | total_reassembly_attempts | total_reassembly_success 
+------------------------+----------------------+-----------------------------+---------------------------
+                      0 |                    0 |                           0 |                         0
+(1 row)
