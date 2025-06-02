@@ -1,10 +1,12 @@
-#include "parse_ais_msg.h"
-#include "bitfield.h"
-#include "shared_ais_utils.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
+#include "parse_ais_msg.h"
+#include "bitfield.h"
+#include "shared_ais_utils.h"
+#include "pg_ais_metrics.h"
 
 
 /**
@@ -446,6 +448,7 @@ ParseResult parse_msg_27(AISMessage *msg, const char *payload) {
  * @return ParseResult containing structured status of parse attempt
  */
 ParseResult parse_ais_payload(AISMessage *msg, const char *payload, int fill_bits) {
+    ParseResult result;
     (void)fill_bits;
     if (!payload || strlen(payload) < 1) return PARSE_ERROR;
     uint32_t msg_type;
@@ -453,31 +456,34 @@ ParseResult parse_ais_payload(AISMessage *msg, const char *payload, int fill_bit
     switch (msg_type) {
         case 1:
         case 2:
-        case 3: return parse_msg_1_2_3(msg, payload);
+        case 3: result = parse_msg_1_2_3(msg, payload); break;
         case 4:
-        case 11: return parse_msg_4_11(msg, payload);
-        case 5: return parse_msg_5(msg, payload);
-        case 6: return parse_msg_6(msg, payload);
-        case 7: return parse_msg_7(msg, payload);
-        case 8: return parse_msg_8(msg, payload);
-        case 9: return parse_msg_9(msg, payload);
-        case 10: return parse_msg_10(msg, payload);
-        case 12: return parse_msg_12(msg, payload);
-        case 13: return parse_msg_13(msg, payload);
-        case 14: return parse_msg_14(msg, payload);
-        case 15: return parse_msg_15(msg, payload);
-        case 16: return parse_msg_16(msg, payload);
-        case 17: return parse_msg_17(msg, payload);
+        case 11: result = parse_msg_4_11(msg, payload); break;
+        case 5: result = parse_msg_5(msg, payload); break;
+        case 6: result = parse_msg_6(msg, payload); break;
+        case 7: result = parse_msg_7(msg, payload); break;
+        case 8: result = parse_msg_8(msg, payload); break;
+        case 9: result = parse_msg_9(msg, payload); break;
+        case 10: result = parse_msg_10(msg, payload); break;
+        case 12: result = parse_msg_12(msg, payload); break;
+        case 13: result = parse_msg_13(msg, payload); break;
+        case 14: result = parse_msg_14(msg, payload); break;
+        case 15: result = parse_msg_15(msg, payload); break;
+        case 16: result = parse_msg_16(msg, payload); break;
+        case 17: result = parse_msg_17(msg, payload); break;
         case 18:
         case 19:
-        case 24: return parse_msg_18_19_24(msg, payload);
-        case 20: return parse_msg_20(msg, payload);
-        case 21: return parse_msg_21(msg, payload);
-        case 22: return parse_msg_22(msg, payload);
-        case 23: return parse_msg_23(msg, payload);
-        case 25: return parse_msg_25(msg, payload);
-        case 26: return parse_msg_26(msg, payload);
-        case 27: return parse_msg_27(msg, payload);
+        case 24: result = parse_msg_18_19_24(msg, payload); break;
+        case 20: result = parse_msg_20(msg, payload); break;
+        case 21: result = parse_msg_21(msg, payload); break;
+        case 22: result = parse_msg_22(msg, payload); break;
+        case 23: result = parse_msg_23(msg, payload); break;
+        case 25: result = parse_msg_25(msg, payload); break;
+        case 26: result = parse_msg_26(msg, payload); break;
+        case 27: result = parse_msg_27(msg, payload); break;
+        default: result = PARSE_UNSUPPORTED; break;
         default: return PARSE_UNSUPPORTED;
     }
+    pg_ais_record_parse_result(result == PARSE_OK);
+    return result;
 }

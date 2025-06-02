@@ -65,3 +65,9 @@ SELECT pg_ais_get_float_field(sentence, 'foobar') FROM test_text_field;
 SELECT pg_ais_get_bool_field(sentence, 'raim') FROM test_text_field;
 SELECT pg_ais_get_bool_field(sentence, 'accuracy') FROM test_text_field;
 SELECT pg_ais_get_bool_field(sentence, 'foobar') FROM test_text_field;
+
+
+-- Metrics collection
+SELECT * FROM pg_ais_metrics();
+SELECT pg_ais_reset_metrics();
+SELECT * FROM pg_ais_metrics();

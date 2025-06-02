@@ -75,3 +75,16 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/auto_test_payloads.c")
     target_link_libraries(auto_payload_tests cmocka)
     add_test(NAME auto_payload_tests COMMAND auto_payload_tests)
 endif()
+
+# Benchmarking
+add_executable(pg_ais_bench
+    benchmark/pg_ais_bench.c
+    src/pg_ais_core.c
+    src/parse_ais.c
+    src/parse_ais_msg.c
+    src/ais_core.c
+    src/bitfield.c
+    src/shared_ais_utils.c
+    src/pg_ais_metrics.c
+)
+target_include_directories(pg_ais_bench PRIVATE ${PostgreSQL_INCLUDE_DIRS})
