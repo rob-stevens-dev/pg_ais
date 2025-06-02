@@ -638,6 +638,26 @@ static void test_parse_string_safe(void **state) {
 }
 
 
+static void test_parse_string_utf8_safe(void **state) {
+    (void)state;
+
+    // Valid case: "15Muq6" decodes to something non-empty
+    const char *payload = "15Muq6";
+    char *s = parse_string_utf8(payload, 0, 36); // 6 characters
+    assert_non_null(s);
+    assert_string_not_equal(s, "");
+    free(s);
+
+    // Invalid: request too many bits from too short a payload
+    s = parse_string_utf8("1", 0, 60);
+    assert_null(s);
+
+    // Invalid: illegal six-bit characters
+    s = parse_string_utf8("~~~~~~~~", 0, 48);
+    assert_null(s);
+}
+
+
 int main(void) {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_parse_uint_bounds_checking),
@@ -682,6 +702,7 @@ int main(void) {
         cmocka_unit_test(test_parse_string_utf8_basic),
         cmocka_unit_test(test_parse_string_utf8_trailing_spaces),
         cmocka_unit_test(test_parse_string_safe),
+        cmocka_unit_test(test_parse_string_utf8_safe),
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }
